@@ -14,6 +14,7 @@ struct BoardConfig: Codable, Equatable {
     var cards: Cards
 
     struct Cards: Codable, Equatable {
+        var session: Bool
         var opus: Bool
         var fable: Bool
         var codex: Bool

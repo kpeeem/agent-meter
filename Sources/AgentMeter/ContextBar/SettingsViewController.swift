@@ -96,6 +96,7 @@ final class SettingsViewController: PreferencePaneViewController {
     }
 
     private static let cardFields: [(id: String, title: String, field: WritableKeyPath<BoardConfig.Cards, Bool>)] = [
+        ("session", "Claude 5-hour session", \.session),
         ("opus", "Opus weekly", \.opus),
         ("fable", "Fable weekly", \.fable),
         ("codex", "Codex session", \.codex),

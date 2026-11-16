@@ -38,6 +38,13 @@ public struct ClaudeLiveUsage: Codable, Sendable {
     }
 
     public static let throttleBackoff: TimeInterval = 60 * 60
+    public static let refreshInterval: TimeInterval = 5 * 60
+
+    public func scheduleStopped(at now: Date = .now, watchingSince: Date) -> Bool {
+        guard !waiting(at: now), (retryAt ?? .distantPast) <= now else { return false }
+        let overdue = 3 * Self.refreshInterval
+        return now.timeIntervalSince(attemptedAt) >= overdue && now.timeIntervalSince(watchingSince) >= overdue
+    }
 
     public mutating func keep(_ old: Self?) {
         if status == .throttled {
@@ -55,7 +62,11 @@ public struct ClaudeLiveUsage: Codable, Sendable {
         return retryAt > now && retryAt.timeIntervalSince(attemptedAt) <= Self.throttleBackoff
     }
 
-    public func message(at now: Date = .now) -> String {
+    public func message(at now: Date = .now, stopped: Bool = false) -> String {
+        if stopped {
+            let last = attemptedAt.formatted(.dateTime.month(.abbreviated).day().hour().minute())
+            return "The background collector has not run since \(last). Turn automatic refresh back on in Settings → Claude account."
+        }
         switch status {
         case .throttled where separateSignIn != true:
             return "Claude Code is rate-limited by your other sessions. Sign in for Agent Meter to get reset times."

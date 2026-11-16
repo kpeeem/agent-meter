@@ -83,6 +83,14 @@ final class BoardLink: NSObject, ObservableObject {
         pushedAt = now
     }
 
+    static func zone(at now: Date = .now) -> String {
+        let seconds = TimeZone.current.secondsFromGMT(for: now)
+        let minutes = abs(seconds) / 60
+        let name = String(format: "<%@%02d%02d>", seconds < 0 ? "-" : "+", minutes / 60, minutes % 60)
+        let fraction = minutes % 60 == 0 ? "" : String(format: ":%02d", minutes % 60)
+        return name + (seconds < 0 ? "" : "-") + String(minutes / 60) + fraction
+    }
+
     func apply(_ update: BoardConfig) {
         guard let board, let configChar, let payload = try? JSONEncoder().encode(update) else { return }
         config = update
@@ -289,6 +297,11 @@ extension BoardLink: CBPeripheralDelegate {
         guard characteristic.uuid == Self.configID, let data = characteristic.value, data.count <= 1024,
               let decoded = try? JSONDecoder().decode(BoardConfig.self, from: data) else { return }
         config = decoded
+        if decoded.tz != Self.zone() {
+            var corrected = decoded
+            corrected.tz = Self.zone()
+            apply(corrected)
+        }
         if let latest { push(latest) }
     }
 }

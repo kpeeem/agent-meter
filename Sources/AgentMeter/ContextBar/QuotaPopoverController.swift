@@ -204,6 +204,8 @@ final class QuotaPopoverController: NSViewController {
                 contents.append(note("Asking Claude Code for current limits…"))
             } else if let text = model.claudeRefreshNote {
                 contents.append(note(text, color: Palette.urgencyRed))
+            } else if model.claudeScheduleStopped {
+                contents.append(note(live.message(at: now, stopped: true), color: Palette.urgencyRed))
             } else if live.status != .ready {
                 contents.append(note(live.message(at: now), color: live.status == .needsLogin ? Palette.urgencyRed : nil))
             }

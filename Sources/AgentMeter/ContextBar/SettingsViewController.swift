@@ -84,7 +84,8 @@ final class SettingsViewController: PreferencePaneViewController {
             self?.updateMenuBarOptions(states, hidden: hidden)
         }.store(in: &updates)
         model.$result.sink { [weak self] result in
-            self?.automaticStatus.stringValue = result.automaticClaude?.message()
+            guard let self else { return }
+            automaticStatus.stringValue = result.automaticClaude?.message(stopped: model.claudeScheduleStopped)
                 ?? "Enable the background collector for automatic account limits."
         }.store(in: &updates)
         model.board.$config.removeDuplicates().sink { [weak self] config in
@@ -145,16 +146,8 @@ final class SettingsViewController: PreferencePaneViewController {
         interval.action = #selector(boardInterval(_:))
         interval.setAccessibilityLabel("Board redraw interval")
 
-        let zone = NSTextField(string: config.tz)
-        zone.target = self
-        zone.action = #selector(boardZone(_:))
-        zone.setAccessibilityLabel("Board timezone")
-        zone.toolTip = "POSIX timezone, for example MSK-3 or CET-1CEST,M3.5.0,M10.5.0/3"
-        zone.widthAnchor.constraint(equalToConstant: 150).isActive = true
-
         boardRows.addArrangedSubview(horizontalStack([label("Numbers from"), source, flexibleSpacer()]))
         boardRows.addArrangedSubview(horizontalStack([label("Redraw"), theme, interval, flexibleSpacer()]))
-        boardRows.addArrangedSubview(horizontalStack([label("Timezone"), zone, flexibleSpacer()]))
         boardRows.addArrangedSubview(DividerView())
         for card in Self.cardFields {
             let checkbox = NSButton(checkboxWithTitle: card.title, target: self, action: #selector(boardCard(_:)))
@@ -191,12 +184,6 @@ final class SettingsViewController: PreferencePaneViewController {
 
     @objc private func boardInterval(_ sender: NSPopUpButton) {
         changeBoard { $0.every = BoardConfig.intervals[max(0, sender.indexOfSelectedItem)] }
-    }
-
-    @objc private func boardZone(_ sender: NSTextField) {
-        let zone = sender.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !zone.isEmpty, zone.count <= 48 else { return }
-        changeBoard { $0.tz = zone }
     }
 
     @objc private func boardCard(_ sender: NSButton) {

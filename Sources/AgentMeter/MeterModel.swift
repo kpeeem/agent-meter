@@ -10,6 +10,11 @@ final class MeterModel: ObservableObject {
     @Published private(set) var updatedAt: Date?
     let accounts = ServiceAccounts()
     let board = BoardLink()
+    private let startedAt = Date.now
+
+    var claudeScheduleStopped: Bool {
+        result.automaticClaude?.scheduleStopped(watchingSince: startedAt) == true
+    }
     @Published private(set) var hiddenMenuItems = Set(UserDefaults.standard.stringArray(forKey: "menu-bar.hidden") ?? [])
     @Published var notchEnabled = UserDefaults.standard.object(forKey: "notch.enabled") as? Bool ?? true {
         didSet { UserDefaults.standard.set(notchEnabled, forKey: "notch.enabled") }

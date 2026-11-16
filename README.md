@@ -7,7 +7,14 @@ Agent Meter показывает квоты Claude Code, Codex, Z.ai и Kimi Cod
 Нужны macOS 14+ и Xcode с macOS SDK. Сборка использует SwiftPM без внешних зависимостей.
 
 ```sh
+git clone git@github.com:kpeeem/agent-meter.git && cd agent-meter
+```
+
+```sh
 ./scripts/build-app.sh
+```
+
+```sh
 open "build/Agent Meter.app"
 ```
 

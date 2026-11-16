@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.device.bluetooth</key>
+	<true/>
+	<key>com.apple.security.files.user-selected.read-only</key>
+	<true/>
+	<key>com.apple.security.files.bookmarks.app-scope</key>
+	<true/>
+	<key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+	<array>
+		<string>/Library/Application Support/Claude/plan-usage-history.json</string>
+		<string>/.claude-statistics/usage-cache.json</string>
+		<string>/Library/Application Support/Agent Meter/claude-usage.json</string>
+		<string>/Library/Application Support/Agent Meter/notch-activity.json</string>
+		<string>/Library/Application Support/Agent Meter/grok-usage.json</string>
+		<string>/Library/Application Support/Agent Meter/codex-usage.json</string>
+		<string>/Library/Application Support/Claude/claude-code-sessions/</string>
+	</array>
+	<key>com.apple.security.temporary-exception.files.home-relative-path.read-write</key>
+	<array>
+		<string>/Library/Application Support/Agent Meter/replies/</string>
+		<string>/Library/Application Support/Agent Meter/claude-refresh-request</string>
+	</array>
+	<key>com.apple.security.temporary-exception.apple-events</key>
+	<array>
+		<string>com.mitchellh.ghostty</string>
+		<string>com.googlecode.iterm2</string>
+		<string>com.apple.Terminal</string>
+	</array>
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
+</dict>
+</plist>

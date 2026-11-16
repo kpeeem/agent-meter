@@ -16,6 +16,7 @@
 	<array>
 		<string>/Library/Application Support/Claude/plan-usage-history.json</string>
 		<string>/.claude-statistics/usage-cache.json</string>
+		<string>/.claude/quota-live.json</string>
 		<string>/Library/Application Support/Agent Meter/claude-usage.json</string>
 		<string>/Library/Application Support/Agent Meter/notch-activity.json</string>
 		<string>/Library/Application Support/Agent Meter/grok-usage.json</string>

@@ -58,6 +58,10 @@ final class SourceAccess {
         homeDirectory?.appendingPathComponent(ClaudeLiveUsage.relativePath)
     }
 
+    var claudeLiveQuota: URL? {
+        homeDirectory?.appendingPathComponent(ClaudeQuota.liveQuotaPath)
+    }
+
     var claudeRefreshRequest: URL? {
         homeDirectory?.appendingPathComponent(ClaudeLiveUsage.refreshRequestPath)
     }

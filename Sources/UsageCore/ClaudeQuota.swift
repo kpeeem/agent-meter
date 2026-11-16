@@ -5,6 +5,7 @@ public enum ClaudeQuota {
     public static let fileName = ".agent-meter-quota.json"
     public static let desktopHistoryPath = "Library/Application Support/Claude/plan-usage-history.json"
     public static let statisticsCachePath = ".claude-statistics/usage-cache.json"
+    public static let liveQuotaPath = ".claude/quota-live.json"
 
     public static func capture(_ input: Data, at date: Date = .now) throws -> [Quota] {
         let line = try JSONDecoder().decode(StatusLine.self, from: input)
@@ -47,6 +48,29 @@ public enum ClaudeQuota {
         try file.close()
         let destination = folder.appendingPathComponent(fileName).path
         guard rename(temporary, destination) == 0 else { throw POSIXError(.EIO) }
+    }
+
+    public static func readLiveQuota(_ url: URL, now: Date = .now) -> [Quota] {
+        guard let file = try? openLog(url), let bytes = try? file.read(upToCount: 65_537), bytes.count <= 65_536,
+              let live = try? JSONDecoder().decode(LiveQuota.self, from: bytes), live.version == 1,
+              let observedAt = timestamp(live.observedAt), observedAt <= now.addingTimeInterval(60) else { return [] }
+        let windows = [(QuotaWindow.fiveHours, live.fiveHour), (.sevenDays, live.sevenDay)]
+        return windows.compactMap { window, value in
+            value.flatMap { Quota(window: window, used: $0.percentUsed, observedAt: observedAt,
+                                  resetEpoch: timestamp($0.resetsAt)?.timeIntervalSince1970) }
+        }
+    }
+
+    private struct LiveQuota: Decodable {
+        let version: Int
+        let observedAt: String
+        let fiveHour: Window?
+        let sevenDay: Window?
+
+        struct Window: Decodable {
+            let percentUsed: Double
+            let resetsAt: String?
+        }
     }
 
     static func readCodeFableQuota(_ url: URL, now: Date) -> Quota? {

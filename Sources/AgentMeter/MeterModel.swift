@@ -78,13 +78,14 @@ final class MeterModel: ObservableObject {
         let desktopHistory = access.desktopQuotaHistory
         let statisticsCache = access.statisticsUsageCache
         let automaticClaude = access.automaticClaudeUsage
+        let liveQuota = access.claudeLiveQuota
         let grokUsage = access.grokUsage
         let codexUsage = access.codexUsage
         Task {
             let scoped = roots.filter { $0.value.startAccessingSecurityScopedResource() }
             var scan = await scanner.scan(scoped, days: days, desktopHistory: desktopHistory,
                                           statisticsCache: statisticsCache, automaticClaude: automaticClaude,
-                                          grokUsage: grokUsage, codexUsage: codexUsage)
+                                          liveQuota: liveQuota, grokUsage: grokUsage, codexUsage: codexUsage)
             for url in scoped.values { url.stopAccessingSecurityScopedResource() }
             scan.unreadable.formUnion(Set(roots.keys).subtracting(scoped.keys))
             if self.generation == generation && self.days == days {

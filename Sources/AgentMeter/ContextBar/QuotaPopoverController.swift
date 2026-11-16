@@ -164,7 +164,15 @@ final class QuotaPopoverController: NSViewController {
                 (result.codexLive?.attemptedAt.formatted(.dateTime.hour().minute()) ?? "")
             header.addArrangedSubview(source)
         }
-        if desktop || (provider == .claude && result.claudeQuotasAutomatic) {
+        if provider == .claude, result.claudeQuotasLive {
+            let seen = result.claudeQuotas.map(\.observedAt).max()
+            let source = NSTextField(labelWithString: "Live")
+            source.font = .systemFont(ofSize: 10)
+            source.textColor = Palette.secondaryText
+            source.toolTip = "Limits read from Claude Code's own response headers, seen " +
+                (seen?.formatted(.dateTime.hour().minute()) ?? "")
+            header.addArrangedSubview(source)
+        } else if desktop || (provider == .claude && result.claudeQuotasAutomatic) {
             let checked = live.map { " · " + $0.attemptedAt.formatted(.dateTime.hour().minute()) } ?? ""
             let source = NSTextField(labelWithString: desktop ? "Desktop cache" : "Automatic" + checked)
             source.font = .systemFont(ofSize: 10)
@@ -205,7 +213,8 @@ final class QuotaPopoverController: NSViewController {
             } else if let text = model.claudeRefreshNote {
                 contents.append(note(text, color: Palette.urgencyRed))
             } else if model.claudeScheduleStopped {
-                contents.append(note(live.message(at: now, stopped: true), color: Palette.urgencyRed))
+                contents.append(note(live.message(at: now, stopped: true),
+                                     color: result.claudeQuotasLive ? nil : Palette.urgencyRed))
             } else if live.status != .ready {
                 contents.append(note(live.message(at: now), color: live.status == .needsLogin ? Palette.urgencyRed : nil))
             }

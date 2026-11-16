@@ -13,8 +13,8 @@ public actor UsageScanner {
     public init() {}
 
     public func scan(_ roots: [LogSource: URL], days: Int, now: Date = .now,
-                     desktopHistory: URL? = nil, statisticsCache: URL? = nil,
-                     automaticClaude: URL? = nil, grokUsage: URL? = nil, codexUsage: URL? = nil) -> ScanResult {
+                     desktopHistory: URL? = nil, statisticsCache: URL? = nil, automaticClaude: URL? = nil,
+                     liveQuota: URL? = nil, grokUsage: URL? = nil, codexUsage: URL? = nil) -> ScanResult {
         var result = ScanResult()
         result.grok = grokUsage.flatMap(GrokUsage.read)
         let calendar = Calendar.current
@@ -73,6 +73,7 @@ public actor UsageScanner {
         files = refreshed
 
         var desktopQuotas: [Quota] = []
+        var automaticQuotas: [Quota] = []
         if let desktopHistory, result.claudeQuotas.allSatisfy({ $0.isStale(at: now) }) {
             let desktop = ClaudeQuota.readDesktopHistory(desktopHistory, now: now)
             if !desktop.isEmpty,
@@ -107,10 +108,7 @@ public actor UsageScanner {
                     result.claudeQuotas[index] = current.replacingReset(reset)
                 }
             }
-            result.claudeQuotasAutomatic = result.claudeQuotas.contains { live.quotas.contains($0) }
-            result.claudeQuotasFromDesktop = result.claudeQuotas.contains { quota in
-                desktopQuotas.contains { $0.window == quota.window && $0.observedAt == quota.observedAt }
-            }
+            automaticQuotas = live.quotas
             if let quota = live.fable, quota.observedAt <= now,
                quota.observedAt > (result.claudeFableQuota?.observedAt ?? .distantPast) {
                 result.claudeFableQuota = quota
@@ -118,6 +116,24 @@ public actor UsageScanner {
                 result.claudeFableQuotaAutomatic = true
             }
         }
+
+        let headerQuotas = liveQuota.map { ClaudeQuota.readLiveQuota($0, now: now) } ?? []
+        for quota in headerQuotas {
+            guard let index = result.claudeQuotas.firstIndex(where: { $0.window == quota.window }) else {
+                result.claudeQuotas.append(quota)
+                continue
+            }
+            if result.claudeQuotas[index].observedAt < quota.observedAt { result.claudeQuotas[index] = quota }
+        }
+        let shown = result.claudeQuotas
+        func fedBy(_ origin: [Quota]) -> Bool {
+            shown.contains { quota in
+                origin.contains { $0.window == quota.window && $0.observedAt == quota.observedAt }
+            }
+        }
+        result.claudeQuotasLive = fedBy(headerQuotas)
+        result.claudeQuotasAutomatic = fedBy(automaticQuotas)
+        result.claudeQuotasFromDesktop = fedBy(desktopQuotas)
 
         let claudeLogs = refreshed.values.filter { $0.source.provider == .claude }.compactMap(\.parsed)
         let codexLogs = refreshed.values.filter { $0.source.provider == .codex }.compactMap(\.parsed)

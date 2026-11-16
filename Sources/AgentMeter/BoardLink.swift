@@ -139,7 +139,27 @@ final class BoardLink: NSObject, ObservableObject {
             plan: result.codexLive?.plan,
             session: window(result.codexQuotas.first { $0.window == .fiveHours }),
             week: window(result.codexQuotas.first { $0.window == .sevenDays }))
-        return try? JSONEncoder().encode(Payload(at: Int(now.timeIntervalSince1970), claude: claude, codex: codex))
+        return try? JSONEncoder().encode(Payload(at: Int(now.timeIntervalSince1970), claude: claude, codex: codex,
+                                                 agent: agent(result, now: now)))
+    }
+
+    private func agent(_ result: ScanResult, now: Date) -> Payload.Agent? {
+        let live = result.notchActivities.filter { now.timeIntervalSince($0.updatedAt) < 4 * 3600 }
+        let newest = { (group: [NotchActivity]) in group.max { $0.updatedAt < $1.updatedAt } }
+        let name = { (activity: NotchActivity) in String(activity.project.prefix(22)) }
+
+        let attention = live.filter { $0.phase.needsAttention }
+        if let one = newest(attention) {
+            return Payload.Agent(state: "waiting", project: name(one), count: attention.count)
+        }
+        let working = live.filter { $0.phase == .running || $0.phase == .ready }
+        if let one = newest(working) {
+            return Payload.Agent(state: "working", project: name(one), count: working.count)
+        }
+        if let one = newest(live.filter({ $0.phase.isFinished })) {
+            return Payload.Agent(state: one.phase == .failed ? "failed" : "done", project: name(one), count: 1)
+        }
+        return nil
     }
 
     private func model(_ result: ScanResult, named: String) -> Quota? {
@@ -185,6 +205,13 @@ final class BoardLink: NSObject, ObservableObject {
         let at: Int
         let claude: Side
         let codex: Side
+        let agent: Agent?
+
+        struct Agent: Encodable {
+            let state: String
+            let project: String
+            let count: Int
+        }
 
         struct Side: Encodable {
             let state: String

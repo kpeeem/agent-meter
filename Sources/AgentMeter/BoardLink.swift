@@ -129,16 +129,16 @@ final class BoardLink: NSObject, ObservableObject {
         let claude = Payload.Side(
             state: claudeState(result, now: now),
             plan: nil,
-            session: window(result.claudeQuotas.first { $0.window == .fiveHours }),
-            week: window(result.claudeQuotas.first { $0.window == .sevenDays }),
-            opus: window(model(result, named: "opus")),
-            sonnet: window(model(result, named: "sonnet")),
-            fable: window(result.claudeFableQuota))
+            session: window(result.claudeQuotas.first { $0.window == .fiveHours }, now: now),
+            week: window(result.claudeQuotas.first { $0.window == .sevenDays }, now: now),
+            opus: window(model(result, named: "opus"), now: now),
+            sonnet: window(model(result, named: "sonnet"), now: now),
+            fable: window(result.claudeFableQuota, now: now))
         let codex = Payload.Side(
             state: codexState(result, now: now),
             plan: result.codexLive?.plan,
-            session: window(result.codexQuotas.first { $0.window == .fiveHours }),
-            week: window(result.codexQuotas.first { $0.window == .sevenDays }))
+            session: window(result.codexQuotas.first { $0.window == .fiveHours }, now: now),
+            week: window(result.codexQuotas.first { $0.window == .sevenDays }, now: now))
         return try? JSONEncoder().encode(Payload(at: Int(now.timeIntervalSince1970), claude: claude, codex: codex,
                                                  agent: agent(result, now: now)))
     }
@@ -166,37 +166,39 @@ final class BoardLink: NSObject, ObservableObject {
         result.claudeModelQuotas.first { $0.name.localizedCaseInsensitiveContains(named) }?.quota
     }
 
-    private func window(_ quota: Quota?) -> [Double]? {
+    private func window(_ quota: Quota?, now: Date) -> [Double]? {
         guard let quota else { return nil }
         let used = (quota.used * 10).rounded() / 10
-        guard let resetsAt = quota.resetsAt else { return [used] }
-        return [used, resetsAt.timeIntervalSince1970.rounded()]
+        let reset = quota.resetsAt?.timeIntervalSince1970.rounded() ?? 0
+        let age = max(0, now.timeIntervalSince(quota.observedAt)).rounded()
+        if age >= 60 { return [used, reset, age] }
+        return reset > 0 ? [used, reset] : [used]
     }
 
     private func claudeState(_ result: ScanResult, now: Date) -> String {
         let quotas = result.claudeQuotas + [result.claudeFableQuota].compactMap { $0 }
-        let stale = quotas.isEmpty ? "none" : "stale"
-        switch result.automaticClaude?.status {
-        case .needsLogin: return "expired"
-        case .clientMissing: return quotas.isEmpty ? "none" : "stale"
-        case .throttled: return quotas.isEmpty ? "limit" : "stale"
-        case .timedOut, .unavailable: return quotas.isEmpty ? "err" : "stale"
-        case .ready, .none: break
+        if result.automaticClaude?.status == .needsLogin { return "expired" }
+        guard !quotas.isEmpty else {
+            switch result.automaticClaude?.status {
+            case .throttled: return "limit"
+            case .timedOut, .unavailable: return "err"
+            default: return "none"
+            }
         }
-        if quotas.isEmpty { return "none" }
-        return quotas.contains { $0.isStale(at: now) } ? stale : "ok"
+        return quotas.contains { $0.isStale(at: now) } ? "stale" : "ok"
     }
 
     private func codexState(_ result: ScanResult, now: Date) -> String {
         let quotas = result.codexQuotas
-        switch result.codexLive?.status {
-        case .signedOut: return "none"
-        case .expired: return "expired"
-        case .throttled: return quotas.isEmpty ? "limit" : "stale"
-        case .unavailable: return quotas.isEmpty ? "err" : "stale"
-        case .ready, .none: break
+        if result.codexLive?.status == .signedOut { return "none" }
+        if result.codexLive?.status == .expired { return "expired" }
+        guard !quotas.isEmpty else {
+            switch result.codexLive?.status {
+            case .throttled: return "limit"
+            case .unavailable: return "err"
+            default: return "none"
+            }
         }
-        if quotas.isEmpty { return "none" }
         return quotas.contains { $0.isStale(at: now) } ? "stale" : "ok"
     }
 

@@ -2,11 +2,12 @@ import AppKit
 import Combine
 
 @MainActor
-final class FixedSizeTabViewController: NSTabViewController {
-    static let fixedContentSize = NSSize(width: 820, height: 680)
+final class DetailTabViewController: NSTabViewController {
+    static let defaultContentSize = NSSize(width: 820, height: 680)
+    static let minimumContentHeight: CGFloat = 320
 
     override var preferredContentSize: NSSize {
-        get { Self.fixedContentSize }
+        get { view.window.map { $0.contentRect(forFrameRect: $0.frame).size } ?? Self.defaultContentSize }
         set {}
     }
 
@@ -17,17 +18,7 @@ final class FixedSizeTabViewController: NSTabViewController {
 
     override func tabView(_ tabView: NSTabView, didSelect item: NSTabViewItem?) {
         super.tabView(tabView, didSelect: item)
-        guard let window = view.window else { return }
-        updateToolbarSelection(window.toolbar)
-        let target = Self.fixedContentSize
-        window.contentMinSize = target
-        window.contentMaxSize = target
-        let current = window.contentRect(forFrameRect: window.frame).size
-        guard abs(current.width - target.width) > 0.5 || abs(current.height - target.height) > 0.5 else { return }
-        let top = window.frame.maxY
-        var frame = window.frameRect(forContentRect: NSRect(origin: window.frame.origin, size: target))
-        frame.origin.y = top - frame.height
-        window.setFrame(frame, display: true)
+        updateToolbarSelection(view.window?.toolbar)
     }
 
     override func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier identifier: NSToolbarItem.Identifier,
@@ -81,7 +72,7 @@ final class FixedSizeTabViewController: NSTabViewController {
 final class DetailWindowController: NSWindowController {
     enum Tab: Int { case stats, settings, about }
 
-    private let tabs = FixedSizeTabViewController()
+    private let tabs = DetailTabViewController()
     private let model: MeterModel
     private var alerts: AnyCancellable?
 
@@ -94,7 +85,7 @@ final class DetailWindowController: NSWindowController {
         addTab(SettingsViewController(model: model), title: "Settings", icon: "gearshape")
         addTab(AboutViewController(), title: "About", icon: "info.circle")
 
-        let size = FixedSizeTabViewController.fixedContentSize
+        let size = DetailTabViewController.defaultContentSize
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: size),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                               backing: .buffered, defer: false)
@@ -104,8 +95,8 @@ final class DetailWindowController: NSWindowController {
         window.titlebarAppearsTransparent = true
         window.toolbarStyle = .preference
         window.isReleasedWhenClosed = false
-        window.contentMinSize = size
-        window.contentMaxSize = size
+        window.contentMinSize = NSSize(width: size.width, height: DetailTabViewController.minimumContentHeight)
+        window.contentMaxSize = NSSize(width: size.width, height: .greatestFiniteMagnitude)
         window.contentViewController = tabs
         window.toolbar?.displayMode = .iconOnly
         window.center()
@@ -185,7 +176,7 @@ class PreferencePaneViewController: NSViewController {
             document.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             contentStack.topAnchor.constraint(equalTo: document.topAnchor, constant: Spacing.l),
             contentStack.bottomAnchor.constraint(equalTo: document.bottomAnchor, constant: -24),
-            view.widthAnchor.constraint(greaterThanOrEqualToConstant: FixedSizeTabViewController.fixedContentSize.width),
+            view.widthAnchor.constraint(greaterThanOrEqualToConstant: DetailTabViewController.defaultContentSize.width),
         ])
 
         if let width = preferredContentWidth {
@@ -199,7 +190,6 @@ class PreferencePaneViewController: NSViewController {
                 contentStack.trailingAnchor.constraint(equalTo: document.trailingAnchor, constant: -24),
             ])
         }
-        preferredContentSize = FixedSizeTabViewController.fixedContentSize
     }
 
     func addFullWidth(_ content: NSView) {

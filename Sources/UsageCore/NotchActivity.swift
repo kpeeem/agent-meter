@@ -83,11 +83,12 @@ public struct NotchActivity: Codable, Identifiable, Sendable, Equatable {
     public let startedAt: Date?
     public let request: NotchRequest?
     public let pid: Int32?
+    public let origin: WorkOrigin?
 
     public init(provider: Provider, session: UUID, phase: Phase, cwd: String?, host: Host?,
                 terminalID: String?, updatedAt: Date, action: String? = nil, prompt: String? = nil,
                 message: String? = nil, messageAt: Date? = nil, startedAt: Date? = nil,
-                request: NotchRequest? = nil, pid: Int32? = nil) {
+                request: NotchRequest? = nil, pid: Int32? = nil, origin: WorkOrigin? = nil) {
         self.provider = provider
         self.session = session
         self.phase = phase
@@ -102,6 +103,7 @@ public struct NotchActivity: Codable, Identifiable, Sendable, Equatable {
         self.startedAt = startedAt
         self.request = request
         self.pid = pid
+        self.origin = origin == .interactive ? nil : origin
     }
 
     public static func processAlive(_ pid: Int32, startedBy date: Date = .distantFuture) -> Bool {
@@ -124,7 +126,7 @@ public struct NotchActivity: Codable, Identifiable, Sendable, Equatable {
     public func with(phase: Phase, request: NotchRequest?, at date: Date) -> Self {
         Self(provider: provider, session: session, phase: phase, cwd: cwd, host: host, terminalID: terminalID,
              updatedAt: date, action: action, prompt: prompt, message: message, messageAt: messageAt,
-             startedAt: startedAt, request: request, pid: pid)
+             startedAt: startedAt, request: request, pid: pid, origin: origin)
     }
 
     public var canReply: Bool {
@@ -142,7 +144,7 @@ public struct NotchActivity: Codable, Identifiable, Sendable, Equatable {
                     message: message ?? (sameTurn ? event.message : nil),
                     messageAt: message == nil && sameTurn ? event.messageAt : messageAt,
                     startedAt: startedAt ?? event.startedAt, request: request ?? event.request,
-                    pid: pid ?? event.pid)
+                    pid: pid ?? event.pid, origin: origin ?? event.origin)
     }
 
     public func merged(onto previous: Self?, idlePrompt: Bool = false) -> Self? {
@@ -170,14 +172,14 @@ public struct NotchActivity: Codable, Identifiable, Sendable, Equatable {
                     prompt: prompt ?? (phase == .ready ? nil : previous.prompt),
                     message: text, messageAt: textAt, startedAt: turnStart,
                     request: request ?? (phase == previous.phase && phase.needsAttention ? previous.request : nil),
-                    pid: pid ?? previous.pid)
+                    pid: pid ?? previous.pid, origin: origin ?? previous.origin)
     }
 
     public static func recent(_ session: SessionUsage) -> Self {
         Self(provider: session.provider, session: session.sessionID, phase: .recent,
              cwd: session.project.isEmpty ? nil : session.project,
              host: session.provider == .claude ? Host.claudeEntry(session.entrypoint, bundle: nil) : nil,
-             terminalID: nil, updatedAt: session.lastActivity)
+             terminalID: nil, updatedAt: session.lastActivity, origin: session.origin)
     }
 
     public static func sessionID(from url: URL) -> String? {
@@ -572,6 +574,20 @@ public enum NotchTranscript {
         let fractional = ISO8601DateFormatter()
         fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return fractional.date(from: value) ?? ISO8601DateFormatter().date(from: value)
+    }
+}
+
+extension WorkOrigin {
+    public var badge: String? {
+        switch self {
+        case .interactive: nil
+        case .claudeSubagent, .codexSubagent: "Subagent"
+        case .claudeScripted: "claude -p"
+        case .codexScripted: "codex exec"
+        case .codexGuardian: "Guardian"
+        case .codexImported: "Import"
+        case .codexService: "Background"
+        }
     }
 }
 

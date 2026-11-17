@@ -67,6 +67,7 @@ final class MeterModel: ObservableObject {
 
     func refresh(force: Bool = false) {
         accounts.refresh(force: force)
+        requestProcesses()
         guard !scanning else {
             refreshPending = true
             return
@@ -81,11 +82,13 @@ final class MeterModel: ObservableObject {
         let liveQuota = access.claudeLiveQuota
         let grokUsage = access.grokUsage
         let codexUsage = access.codexUsage
+        let agentProcesses = access.agentProcesses
         Task {
             let scoped = roots.filter { $0.value.startAccessingSecurityScopedResource() }
             var scan = await scanner.scan(scoped, days: days, desktopHistory: desktopHistory,
                                           statisticsCache: statisticsCache, automaticClaude: automaticClaude,
-                                          liveQuota: liveQuota, grokUsage: grokUsage, codexUsage: codexUsage)
+                                          liveQuota: liveQuota, grokUsage: grokUsage, codexUsage: codexUsage,
+                                          agentProcesses: agentProcesses)
             for url in scoped.values { url.stopAccessingSecurityScopedResource() }
             scan.unreadable.formUnion(Set(roots.keys).subtracting(scoped.keys))
             if self.generation == generation && self.days == days {
@@ -104,6 +107,24 @@ final class MeterModel: ObservableObject {
                 refresh()
             }
         }
+    }
+
+    private var processesRequestedAt = Date.distantPast
+
+    func requestProcesses() {
+        guard Date.now.timeIntervalSince(processesRequestedAt) > 10, let url = access.agentProcessesRequest,
+              FileManager.default.fileExists(atPath: url.deletingLastPathComponent().path) else { return }
+        processesRequestedAt = .now
+        try? Data().write(to: url)
+    }
+
+    func processSetupCommand() -> String? {
+        let helper = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/AgentMeterRefresh")
+        guard FileManager.default.isExecutableFile(atPath: helper.path) else {
+            alert = "Open the packaged app to list background agent processes."
+            return nil
+        }
+        return quote(helper.path) + " --install-processes"
     }
 
     func refreshClaude() {

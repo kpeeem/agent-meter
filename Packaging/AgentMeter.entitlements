@@ -21,12 +21,14 @@
 		<string>/Library/Application Support/Agent Meter/notch-activity.json</string>
 		<string>/Library/Application Support/Agent Meter/grok-usage.json</string>
 		<string>/Library/Application Support/Agent Meter/codex-usage.json</string>
+		<string>/Library/Application Support/Agent Meter/agent-processes.json</string>
 		<string>/Library/Application Support/Claude/claude-code-sessions/</string>
 	</array>
 	<key>com.apple.security.temporary-exception.files.home-relative-path.read-write</key>
 	<array>
 		<string>/Library/Application Support/Agent Meter/replies/</string>
 		<string>/Library/Application Support/Agent Meter/claude-refresh-request</string>
+		<string>/Library/Application Support/Agent Meter/agent-processes-request</string>
 	</array>
 	<key>com.apple.security.temporary-exception.apple-events</key>
 	<array>

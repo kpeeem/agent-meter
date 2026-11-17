@@ -17,6 +17,7 @@ final class StatsViewController: PreferencePaneViewController {
     private let projects = ProjectsOutlineView()
     private var selectedDay: YearHeatmapView.Day?
     private let history = NSHostingView(rootView: QuotaHistoryChart(samples: []))
+    private let background = verticalStack([], spacing: 7)
     private var updates = Set<AnyCancellable>()
 
     init(model: MeterModel) {
@@ -35,6 +36,8 @@ final class StatsViewController: PreferencePaneViewController {
         history.heightAnchor.constraint(equalToConstant: 200).isActive = true
         addSection(title: "Limits history", subtitle: "Share of each limit used over the last 7 days. Dashed lines are 5-hour windows.",
                    symbol: "chart.xyaxis.line", body: history)
+        addSection(title: "Background", subtitle: "Agents and helpers that run without a window of their own, including runs that keep no transcript.",
+                   symbol: "eye", body: background)
         buildBottomGrid()
         projects.onOpenSession = { [weak model] in model?.openSession($0) }
         projects.onCopyResume = { [weak model] in model?.copyResume($0) }
@@ -120,6 +123,7 @@ final class StatsViewController: PreferencePaneViewController {
         }
 
         renderCalendar(daily)
+        renderBackground(result)
         compositionTotal.stringValue = compact(totals.total) + " total"
         composition.segments = [
             .init(label: "Input", value: UInt64(totals.input), color: Palette.accent),
@@ -174,6 +178,112 @@ final class StatsViewController: PreferencePaneViewController {
         } else {
             heatmapCaption.stringValue = "\(date) · Outside the selected period"
         }
+    }
+
+    private func renderBackground(_ result: ScanResult) {
+        background.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        let now = Date.now
+        let snapshot = result.agentProcesses
+        let time = Date.FormatStyle().hour().minute()
+        background.addArrangedSubview(heading("Running now", trailing: snapshot.map { "Checked " + $0.capturedAt.formatted(time) }))
+        if snapshot == nil {
+            background.addArrangedSubview(caption("Turn on Settings → Background agents to list running agent processes."))
+        } else if snapshot?.isFresh(at: now) == false {
+            background.addArrangedSubview(caption("This list is out of date. The background helper may be off: Settings → Background agents.",
+                                                  color: Palette.urgencyAmber))
+        }
+        if let folders = snapshot?.remoteFolders, !folders.isEmpty, provider != .codex {
+            background.addArrangedSubview(row("Claude Remote Control",
+                                              detail: "Sessions can start from claude.ai or the phone in " + folders.joined(separator: ", "),
+                                              value: "On", tint: Palette.accent))
+        }
+        for group in snapshot?.groups ?? [] where provider == nil || group.provider == provider {
+            background.addArrangedSubview(row(group.title, detail: describe(group, now: now),
+                                              value: (group.count > 1 ? "\(group.count) × " : "") + memory(group.memoryMB),
+                                              tint: group.kind == .remote || group.kind == .ephemeral ? Palette.accent : nil))
+        }
+
+        let day = now.addingTimeInterval(-86_400)
+        let seen = Dictionary(grouping: (snapshot?.seen ?? []).filter {
+            $0.startedAt >= day && (provider == nil || $0.provider == provider)
+        }, by: { $0.title + " · " + $0.owner })
+        if !seen.isEmpty {
+            background.addArrangedSubview(DividerView())
+            background.addArrangedSubview(heading("Seen in the last 24 hours", trailing: "Checked every 30 s"))
+            for (title, runs) in seen.sorted(by: { $0.value.count > $1.value.count }) {
+                let last = runs.map(\.lastSeen).max() ?? now
+                let folders = Set(runs.compactMap { $0.cwd.map { ($0 as NSString).lastPathComponent } }).sorted()
+                background.addArrangedSubview(row(title, detail: (["last " + last.formatted(time)] + folders.prefix(3)).joined(separator: " · "),
+                                                  value: "\(runs.count) run\(runs.count == 1 ? "" : "s")"))
+            }
+        }
+
+        let hidden = result.background.filter { provider == nil || $0.origin.provider == provider }
+        background.addArrangedSubview(DividerView())
+        background.addArrangedSubview(heading("Hidden work · \(model.days)d", trailing: "Already in the totals above"))
+        if hidden.isEmpty {
+            background.addArrangedSubview(caption("No background sessions in this period."))
+        }
+        for usage in hidden {
+            let tokens = usage.tokens.total > 0 ? " · " + compact(usage.tokens.total) + " tokens" : ""
+            background.addArrangedSubview(row(usage.origin.title,
+                                              detail: usage.origin.detail + " · last " + usage.lastActivity.formatted(.dateTime.month(.abbreviated).day().hour().minute()),
+                                              value: "\(usage.runs) run\(usage.runs == 1 ? "" : "s")" + tokens))
+        }
+    }
+
+    private func describe(_ group: AgentProcessGroup, now: Date) -> String {
+        let running = group.startedAt.map { "running " + QuotaPopoverController.countdown(now.timeIntervalSince($0)) }
+        let folder = group.cwd.map { ($0 as NSString).abbreviatingWithTildeInPath }
+        let parts: [String?]
+        switch group.kind {
+        case .remote: parts = ["Cloud tasks can run commands on this Mac", running]
+        case .ephemeral: parts = ["Keeps no transcript", "started by " + group.owner, running, folder]
+        case .scripted: parts = ["Started by " + group.owner, running, folder]
+        case .session: parts = [group.owner, group.idle > 0 ? "\(group.idle) idle" : nil]
+        case .mcp: parts = ["MCP server for " + group.owner, group.count > 1 ? "one copy per session" : nil]
+        case .helper, .app: parts = [group.owner]
+        }
+        return parts.compactMap { $0 }.joined(separator: " · ")
+    }
+
+    private func memory(_ megabytes: Int) -> String {
+        megabytes >= 1024 ? String(format: "%.1f GB", Double(megabytes) / 1024) : "\(megabytes) MB"
+    }
+
+    private func heading(_ text: String, trailing: String?) -> NSView {
+        let title = Typography.caption(text)
+        guard let trailing else { return horizontalStack([title, flexibleSpacer()]) }
+        let detail = NSTextField(labelWithString: trailing)
+        detail.font = .systemFont(ofSize: 10)
+        detail.textColor = Palette.secondaryText
+        return horizontalStack([title, flexibleSpacer(), detail], alignment: .firstBaseline)
+    }
+
+    private func caption(_ text: String, color: NSColor = Palette.secondaryText) -> NSView {
+        let label = NSTextField(wrappingLabelWithString: text)
+        label.font = .systemFont(ofSize: 11)
+        label.textColor = color
+        return label
+    }
+
+    private func row(_ title: String, detail: String, value: String, tint: NSColor? = nil) -> NSView {
+        let name = NSTextField(labelWithString: title)
+        name.font = .systemFont(ofSize: 12, weight: .medium)
+        name.lineBreakMode = .byTruncatingTail
+        name.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        let number = NSTextField(labelWithString: value)
+        number.font = Typography.mono(11, weight: .semibold)
+        number.textColor = tint ?? Palette.primaryText
+        number.setContentCompressionResistancePriority(.required, for: .horizontal)
+        let note = NSTextField(labelWithString: detail)
+        note.font = .systemFont(ofSize: 10.5)
+        note.textColor = Palette.secondaryText
+        note.lineBreakMode = .byTruncatingTail
+        note.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        note.toolTip = detail
+        return verticalStack([horizontalStack([name, flexibleSpacer(), number], alignment: .firstBaseline),
+                              horizontalStack([note, flexibleSpacer()])], spacing: 1)
     }
 
     private func renderHistory() {

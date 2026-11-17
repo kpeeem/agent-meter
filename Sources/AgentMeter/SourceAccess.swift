@@ -70,6 +70,14 @@ final class SourceAccess {
         homeDirectory?.appendingPathComponent(CodexLiveUsage.relativePath)
     }
 
+    var agentProcesses: URL? {
+        homeDirectory?.appendingPathComponent(AgentProcessSnapshot.relativePath)
+    }
+
+    var agentProcessesRequest: URL? {
+        homeDirectory?.appendingPathComponent(AgentProcessSnapshot.requestPath)
+    }
+
     var grokUsage: URL? {
         homeDirectory?.appendingPathComponent(GrokUsage.relativePath)
     }

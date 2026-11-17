@@ -12,9 +12,12 @@ public actor UsageScanner {
 
     public init() {}
 
+    static let importBatchID = UUID(uuidString: "00000000-0000-4000-8000-1a7e2c0de0a1")!
+
     public func scan(_ roots: [LogSource: URL], days: Int, now: Date = .now,
                      desktopHistory: URL? = nil, statisticsCache: URL? = nil, automaticClaude: URL? = nil,
-                     liveQuota: URL? = nil, grokUsage: URL? = nil, codexUsage: URL? = nil) -> ScanResult {
+                     liveQuota: URL? = nil, grokUsage: URL? = nil, codexUsage: URL? = nil,
+                     agentProcesses: URL? = nil) -> ScanResult {
         var result = ScanResult()
         result.grok = grokUsage.flatMap(GrokUsage.read)
         let calendar = Calendar.current
@@ -140,8 +143,9 @@ public actor UsageScanner {
         let claude = summarize(claudeLogs, provider: .claude, from: cutoff, to: now, calendar: calendar)
         let codex = summarize(codexLogs, provider: .codex, from: cutoff, to: now, calendar: calendar)
         result.sessions = claude.sessions + codex.sessions
+        result.background = BackgroundUsage.collect(claudeLogs + codexLogs, from: cutoff, to: now)
         var activityByID: [String: NotchActivity] = [:]
-        for session in result.sessions where !session.isService && now.timeIntervalSince(session.lastActivity) < 4 * 3600 {
+        for session in result.sessions where now.timeIntervalSince(session.lastActivity) < 4 * 3600 {
             let activity = NotchActivity.recent(session)
             activityByID[activity.id] = activity
         }
@@ -150,6 +154,21 @@ public actor UsageScanner {
                   now.timeIntervalSince(activity.updatedAt) < 15 * 60 else { continue }
             if let current = activityByID[activity.id], current.updatedAt > activity.updatedAt { continue }
             activityByID[activity.id] = activity
+        }
+        if let snapshot = agentProcesses.flatMap(AgentProcessSnapshot.read) {
+            result.agentProcesses = snapshot
+            if snapshot.isFresh(at: now) {
+                for activity in snapshot.notchActivities() { activityByID[activity.id] = activity }
+            }
+        }
+        let imports = codexLogs.filter { $0.origin == .codexImported }.compactMap(\.lastActivity)
+            .filter { $0 <= now && now.timeIntervalSince($0) < 15 * 60 }
+        if let newest = imports.max() {
+            let batch = NotchActivity(provider: .codex, session: Self.importBatchID, phase: .done, cwd: nil, host: nil,
+                                      terminalID: nil, updatedAt: newest,
+                                      message: "Imported \(imports.count) Claude Code session\(imports.count == 1 ? "" : "s") into Codex",
+                                      origin: .codexImported)
+            activityByID[batch.id] = batch
         }
         result.notchActivities = Array(activityByID.values.sorted { $0.updatedAt > $1.updatedAt }.prefix(64))
         result.dailyUsage = claude.days + codex.days
@@ -212,9 +231,11 @@ public actor UsageScanner {
             let project = logs.filter { !$0.project.isEmpty }.max {
                 $0.events.count < $1.events.count
             }?.project ?? ""
+            let origin = logs.contains { $0.origin == .interactive } ? WorkOrigin.interactive
+                : logs.first?.origin ?? .interactive
             return SessionUsage(sessionID: id, provider: provider, project: project,
                                 tokens: tokens, lastActivity: last, isService: service,
-                                entrypoint: logs.lazy.compactMap(\.entrypoint).first)
+                                entrypoint: logs.lazy.compactMap(\.entrypoint).first, origin: origin)
         }
         return (sessions, Array(days.values), fableEstimateUSD)
     }

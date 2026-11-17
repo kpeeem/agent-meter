@@ -43,6 +43,10 @@ final class SettingsViewController: PreferencePaneViewController {
                    body: verticalStack([horizontalStack([automaticStatus, flexibleSpacer()]),
                                         horizontalStack([enable, login, flexibleSpacer()])]))
 
+        let processes = NSButton(title: "List running agents…", target: self, action: #selector(enableProcesses))
+        addSection(title: "Background agents", subtitle: "A helper outside the App Sandbox lists Claude Code, Codex and MCP processes every 30 seconds, including runs that keep no transcript. It saves only names, counts and memory, never command lines.",
+                   symbol: "eye", body: horizontalStack([processes, flexibleSpacer()]))
+
         let notch = NSButton(checkboxWithTitle: "Show session activity at the notch", target: self,
                              action: #selector(toggleNotch(_:)))
         notch.state = model.notchEnabled ? .on : .off
@@ -441,14 +445,24 @@ final class SettingsViewController: PreferencePaneViewController {
     }
 
     @objc private func enableAutomatic() { showClaudeSetup(login: false) }
+    @objc private func enableProcesses() {
+        guard let command = model.processSetupCommand() else { return }
+        showCommand(command, title: "List running agents",
+                    action: "The command adds a background helper for your macOS account. Run it again with --uninstall-processes to remove it.")
+    }
     @objc private func loginClaude() { showClaudeSetup(login: true) }
 
     private func showClaudeSetup(login: Bool) {
-        guard let window = view.window, let command = model.claudeSetupCommand(login: login) else { return }
+        guard let command = model.claudeSetupCommand(login: login) else { return }
+        showCommand(command, title: login ? "Sign in for Agent Meter" : "Enable automatic Claude refresh",
+                    action: login ? "Claude Code opens the claude.ai sign-in page. This sign-in is only for Agent Meter and does not change your main Claude Code session."
+                        : "The command enables the background collector for your macOS account.")
+    }
+
+    private func showCommand(_ command: String, title: String, action: String) {
+        guard let window = view.window else { return }
         let alert = NSAlert()
-        alert.messageText = login ? "Sign in for Agent Meter" : "Enable automatic Claude refresh"
-        let action = login ? "Claude Code opens the claude.ai sign-in page. This sign-in is only for Agent Meter and does not change your main Claude Code session."
-            : "The command enables the background collector for your macOS account."
+        alert.messageText = title
         alert.informativeText = "Paste the command in Terminal and press Return. " + action
         alert.addButton(withTitle: "Copy & Open Terminal")
         alert.addButton(withTitle: "Copy Command")

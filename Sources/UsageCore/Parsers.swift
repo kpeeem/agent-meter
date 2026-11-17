@@ -22,6 +22,8 @@ struct ParsedLog: Sendable {
     var notchActivity: NotchActivity?
     var isService = false
     var entrypoint: String?
+    var origin = WorkOrigin.interactive
+    var lastActivity: Date?
 }
 
 enum Parsers {
@@ -51,8 +53,10 @@ enum Parsers {
             events[key] = event
         }
         guard let session = session ?? UUID(uuidString: url.deletingPathExtension().lastPathComponent) else { return nil }
+        let origin: WorkOrigin = url.pathComponents.contains("subagents") ? .claudeSubagent
+            : entrypoint?.hasPrefix("sdk") == true ? .claudeScripted : .interactive
         return ParsedLog(session: session, project: project ?? "", events: Array(events.values), quotas: [],
-                         entrypoint: entrypoint)
+                         entrypoint: entrypoint, origin: origin, lastActivity: events.values.map(\.date).max())
     }
 
     static func codex(_ url: URL, size: Int) throws -> ParsedLog? {
@@ -67,6 +71,9 @@ enum Parsers {
         var turnPrompt: String?
         var turnMessage: String?
         var visible = true
+        var origin = WorkOrigin.interactive
+        var imported = false
+        var lastActivity: Date?
         var project: String?
         var session: UUID?
         var previous: CodexRecord.Usage?
@@ -80,12 +87,16 @@ enum Parsers {
                   let record = try? decoder.decode(CodexRecord.self, from: line) else { return }
             if record.type == "session_meta" {
                 visible = record.payload.userVisible
+                origin = record.payload.origin
                 project = project ?? projectPath(record.payload.cwd)
                 session = session ?? record.payload.id.flatMap(UUID.init(uuidString:))
                 return
             }
             guard record.type == "event_msg", let date = timestamp(record.timestamp) else { return }
+            lastActivity = max(lastActivity ?? date, date)
             switch record.payload.type {
+            case "task_started" where record.payload.turnID?.hasPrefix("external-import") == true:
+                imported = true
             case "task_started":
                 turn = (.running, date)
                 turnStart = date
@@ -126,13 +137,15 @@ enum Parsers {
         }
         let suffix = url.deletingPathExtension().lastPathComponent.suffix(36)
         guard let session = session ?? UUID(uuidString: String(suffix)) else { return nil }
-        let activity = turn.flatMap { turn in visible ? turn : nil }.map { turn in
+        if imported { origin = .codexImported }
+        let activity = turn.flatMap { turn in imported ? nil : turn }.map { turn in
             NotchActivity(provider: .codex, session: session, phase: turn.phase, cwd: project,
                           host: nil, terminalID: nil, updatedAt: turn.date, prompt: turnPrompt,
-                          message: turnMessage, startedAt: turnStart)
+                          message: turnMessage, startedAt: turnStart, origin: origin)
         }
         return ParsedLog(session: session, project: project ?? "", events: events,
-                         quotas: Array(quotas.values), notchActivity: activity, isService: !visible)
+                         quotas: Array(quotas.values), notchActivity: activity, isService: !visible || imported,
+                         origin: origin, lastActivity: lastActivity)
     }
 }
 
@@ -258,11 +271,25 @@ private struct CodexRecord: Decodable {
         let rateLimits: Limits?
         let message: String?
         let lastAgentMessage: String?
+        let turnID: String?
         let userVisible: Bool
+        let origin: WorkOrigin
 
         enum CodingKeys: String, CodingKey {
             case type, id, cwd, info, message, source
             case rateLimits = "rate_limits", lastAgentMessage = "last_agent_message", threadSource = "thread_source"
+            case turnID = "turn_id"
+        }
+
+        struct Source: Decodable {
+            let subagent: Subagent?
+            struct Subagent: Decodable {
+                let other: String?
+                enum CodingKeys: String, CodingKey { case other }
+                init(from decoder: Decoder) throws {
+                    other = try? decoder.container(keyedBy: CodingKeys.self).decodeIfPresent(String.self, forKey: .other)
+                }
+            }
         }
 
         init(from decoder: Decoder) throws {
@@ -274,10 +301,21 @@ private struct CodexRecord: Decodable {
             rateLimits = try values.decodeIfPresent(Limits.self, forKey: .rateLimits)
             message = try? values.decodeIfPresent(String.self, forKey: .message)
             lastAgentMessage = try? values.decodeIfPresent(String.self, forKey: .lastAgentMessage)
-            let source: Any? = values.contains(.source)
-                ? ((try? values.decode(String.self, forKey: .source)) as Any?) ?? [String: Any]() : nil
-            userVisible = CodexThread.isUserVisible(source: source,
-                                                    threadSource: try? values.decodeIfPresent(String.self, forKey: .threadSource))
+            turnID = try? values.decodeIfPresent(String.self, forKey: .turnID)
+            let name = try? values.decode(String.self, forKey: .source)
+            let source: Any? = values.contains(.source) ? (name as Any?) ?? [String: Any]() : nil
+            let thread = (try? values.decodeIfPresent(String.self, forKey: .threadSource))?.lowercased()
+            userVisible = CodexThread.isUserVisible(source: source, threadSource: thread)
+            let subagent = (try? values.decodeIfPresent(Source.self, forKey: .source))?.subagent
+            if thread == "guardian_review" || subagent?.other?.lowercased() == "guardian" {
+                origin = .codexGuardian
+            } else if thread == "subagent" || subagent != nil {
+                origin = .codexSubagent
+            } else if name?.lowercased() == "exec" {
+                origin = .codexScripted
+            } else {
+                origin = userVisible ? .interactive : .codexService
+            }
         }
     }
 

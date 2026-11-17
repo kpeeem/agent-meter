@@ -129,6 +129,7 @@ public struct SessionUsage: Identifiable, Sendable {
     public let lastActivity: Date
     public var isService = false
     public var entrypoint: String?
+    public var origin = WorkOrigin.interactive
 }
 
 public struct ProjectUsage: Identifiable, Sendable {
@@ -162,6 +163,8 @@ public struct ScanResult: Sendable {
     public var grok: GrokUsage?
     public var fableEstimateUSD: Double?
     public var codexQuotas: [Quota] = []
+    public var background: [BackgroundUsage] = []
+    public var agentProcesses: AgentProcessSnapshot?
     public var codexLive: CodexLiveUsage?
     public var codexQuotasLive = false
     public var unreadable: Set<LogSource> = []

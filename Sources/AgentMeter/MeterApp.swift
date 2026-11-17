@@ -33,7 +33,11 @@ private final class MeterDelegate: NSObject, NSApplicationDelegate {
         popover.appearance = NSAppearance(named: .darkAqua)
         popover.contentViewController = quotaPopover
         quotaPopover.onSized = { [weak self] size in
-            if self?.popover.isShown == true { self?.popover.contentSize = size }
+            guard let popover = self?.popover, popover.isShown else { return }
+            let animates = popover.animates
+            popover.animates = false
+            popover.contentSize = size
+            popover.animates = animates
         }
         quotaPopover.onShowStats = { [weak self] in self?.showDetail(.stats) }
         quotaPopover.onShowSettings = { [weak self] in self?.showDetail(.settings) }

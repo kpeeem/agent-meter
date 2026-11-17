@@ -94,7 +94,7 @@ final class NotchActivityTests: XCTestCase {
         XCTAssertNotNil(NotchActivity.parse(data, provider: .codex, environment: [:]))
     }
 
-    func testScannerKeepsServiceTokensButHidesTheThread() async throws {
+    func testScannerKeepsServiceTokensAndMarksTheThread() async throws {
         let parent = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: parent) }
         let folder = parent.appendingPathComponent("sessions")
@@ -116,7 +116,9 @@ final class NotchActivityTests: XCTestCase {
         let result = await UsageScanner().scan([.codexSessions: folder], days: 7, now: now)
         XCTAssertEqual(Set(result.sessions.map(\.sessionID)), [user, guardian])
         XCTAssertEqual(result.sessions.first { $0.sessionID == guardian }?.isService, true)
-        XCTAssertEqual(result.notchActivities.map(\.session), [user])
+        XCTAssertEqual(Set(result.notchActivities.map(\.session)), [user, guardian])
+        XCTAssertNil(result.notchActivities.first { $0.session == user }?.origin)
+        XCTAssertEqual(result.notchActivities.first { $0.session == guardian }?.origin, .codexGuardian)
         XCTAssertEqual(result.dailyUsage.reduce(0) { $0 + $1.sessions }, 1)
     }
 

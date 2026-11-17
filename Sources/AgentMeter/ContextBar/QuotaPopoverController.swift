@@ -16,6 +16,9 @@ final class QuotaPopoverController: NSViewController {
     private let footerStack = verticalStack([], spacing: 0)
     private let scrollView = NSScrollView()
     private var scrollHeight: NSLayoutConstraint!
+    private var maxScrollHeight: CGFloat = 350
+    private var footerHeight: CGFloat = 0
+    private var chosenHeight = UserDefaults.standard.object(forKey: "popover.height") as? Double
     private var availableScreenHeight: CGFloat?
     private var updates = Set<AnyCancellable>()
     private weak var refreshButton: NSButton?
@@ -118,22 +121,50 @@ final class QuotaPopoverController: NSViewController {
             }
         }
         footerStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        if let running = buildBackground(result, now: now) {
+            footerStack.addArrangedSubview(DividerView())
+            footerStack.addArrangedSubview(running)
+        }
         if let attention = buildAttention(result, now: now) {
             footerStack.addArrangedSubview(DividerView())
             footerStack.addArrangedSubview(attention)
         }
         footerStack.addArrangedSubview(DividerView())
         footerStack.addArrangedSubview(buildFooter())
+        let grip = ResizeGrip()
+        grip.onDrag = { [weak self] height in self?.resize(to: height) }
+        grip.onReset = { [weak self] in
+            guard let self else { return }
+            chosenHeight = nil
+            UserDefaults.standard.removeObject(forKey: "popover.height")
+            rebuild(model.result)
+        }
+        grip.startHeight = { [weak self] in self?.scrollHeight.constant ?? 0 }
+        grip.onFinish = { [weak self] in
+            guard let self else { return }
+            chosenHeight = Double(scrollHeight.constant)
+            UserDefaults.standard.set(chosenHeight, forKey: "popover.height")
+        }
+        footerStack.addArrangedSubview(grip)
 
         view.layoutSubtreeIfNeeded()
         let arranged = contentStack.arrangedSubviews
         let inset = contentStack.edgeInsets.top + contentStack.edgeInsets.bottom
         let height = arranged.reduce(inset) { $0 + $1.fittingSize.height }
             + contentStack.spacing * CGFloat(max(0, arranged.count - 1))
-        let footerHeight = ceil(footerStack.fittingSize.height)
+        footerHeight = ceil(footerStack.fittingSize.height)
         let screenHeight = availableScreenHeight ?? NSScreen.main?.visibleFrame.height ?? 800
         let popoverClearance: CGFloat = 28
-        scrollHeight.constant = min(ceil(height), max(0, screenHeight - popoverClearance - footerHeight))
+        maxScrollHeight = max(0, screenHeight - popoverClearance - footerHeight)
+        if let chosenHeight {
+            resize(to: CGFloat(chosenHeight))
+        } else {
+            resize(to: ceil(height))
+        }
+    }
+
+    private func resize(to height: CGFloat) {
+        scrollHeight.constant = min(max(height, min(140, maxScrollHeight)), maxScrollHeight).rounded()
         let size = NSSize(width: Self.contentWidth, height: scrollHeight.constant + footerHeight)
         preferredContentSize = size
         onSized?(size)
@@ -497,6 +528,26 @@ final class QuotaPopoverController: NSViewController {
         return horizontalStack([name, flexibleSpacer(), number], spacing: 6, alignment: .firstBaseline)
     }
 
+    private func buildBackground(_ result: ScanResult, now: Date) -> NSView? {
+        guard let snapshot = result.agentProcesses, snapshot.isFresh(at: now) else { return nil }
+        let ghosts = snapshot.ghosts
+        let remote = snapshot.groups.filter { $0.kind == .remote }.map(\.title)
+        var parts = Dictionary(grouping: ghosts, by: \.title).sorted { $0.key < $1.key }.map { title, runs in
+            runs.count > 1 ? "\(runs.count) × \(title)" : title
+        } + remote
+        if !snapshot.remoteFolders.isEmpty { parts.append("Claude Remote Control") }
+        guard !parts.isEmpty else { return nil }
+        let label = NSTextField(wrappingLabelWithString: "In background: " + parts.joined(separator: ", "))
+        label.font = .systemFont(ofSize: 11)
+        label.textColor = ghosts.isEmpty ? Palette.secondaryText : Palette.primaryText
+        label.preferredMaxLayoutWidth = Self.contentWidth - 2 * Spacing.m - 90
+        let open = NSButton(title: "Details…", target: self, action: #selector(showStats))
+        open.controlSize = .small
+        let stack = horizontalStack([label, flexibleSpacer(), open], alignment: .centerY)
+        stack.edgeInsets = NSEdgeInsets(top: Spacing.xs, left: Spacing.m, bottom: Spacing.xs, right: Spacing.m)
+        return stack
+    }
+
     private func buildAttention(_ result: ScanResult, now: Date) -> NSView? {
         var notes: [(text: String, urgent: Bool)] = []
         if let live = result.automaticClaude, live.separateSignIn == true {
@@ -572,4 +623,51 @@ final class QuotaPopoverController: NSViewController {
     @objc private func refreshStats() { model.refresh(force: true) }
     @objc private func refreshClaude() { model.refreshClaude() }
     @objc private func quitApp() { NSApp.terminate(nil) }
+}
+
+private final class ResizeGrip: NSView {
+    var onDrag: ((CGFloat) -> Void)?
+    var onFinish: (() -> Void)?
+    var onReset: (() -> Void)?
+    var startHeight: (() -> CGFloat)?
+    private var origin: (mouse: CGFloat, height: CGFloat)?
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        translatesAutoresizingMaskIntoConstraints = false
+        heightAnchor.constraint(equalToConstant: 9).isActive = true
+        toolTip = "Drag to change the height. Double-click to fit the content."
+        setAccessibilityRole(.splitter)
+        setAccessibilityLabel("Resize panel")
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    override func resetCursorRects() { addCursorRect(bounds, cursor: .resizeUpDown) }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let handle = NSRect(x: bounds.midX - 18, y: bounds.midY - 1.5, width: 36, height: 3)
+        Palette.secondaryText.withAlphaComponent(0.45).setFill()
+        NSBezierPath(roundedRect: handle, xRadius: 1.5, yRadius: 1.5).fill()
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        if event.clickCount == 2 {
+            origin = nil
+            onReset?()
+            return
+        }
+        origin = (NSEvent.mouseLocation.y, startHeight?() ?? 0)
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard let origin else { return }
+        onDrag?(origin.height + origin.mouse - NSEvent.mouseLocation.y)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        guard origin != nil else { return }
+        origin = nil
+        onFinish?()
+    }
 }

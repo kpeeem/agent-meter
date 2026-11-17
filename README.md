@@ -70,6 +70,18 @@ tee >( '/path/to/Agent Meter.app/Contents/Helpers/AgentMeterStatus' --projects "
 
 В окне **Stats** разверни проект и дважды нажми на сессию, чтобы открыть её в Codex по `codex://threads/<id>` или скопировать `claude --resume <id>`. В **Settings** также можно открыть ссылку вида `codex://plugins/<id>` в Codex. Установка плагинов и исполнение команд происходят только в соответствующем приложении или терминале по твоему действию.
 
+## Фоновые агенты
+
+Раздел **Background** в окне **Stats** показывает работу, у которой нет своего окна, а нотч помечает такие сессии бейджем: `Guardian`, `Subagent`, `claude -p`, `codex exec`, `Import`, `Background`.
+
+- **Hidden work** считается по тем же логам, что и остальная статистика. Это сабагенты Claude (`subagents/` в папке сессии), запуски `claude -p` из скриптов и SDK (`entrypoint` вида `sdk-*`), ревью Codex Guardian (`thread_source: guardian_review`), сабагенты Codex, `codex exec` и треды, которые приложение Codex создаёт, импортируя транскрипты Claude Code (`turn_id: external-import-*`). Импорт в нотче сведён в одну строку на пачку. Токены этих сессий уже входят в общие итоги.
+- **Running now** и **Seen in the last 24 hours** заполняет помощник вне песочницы: из App Sandbox чужие процессы не видны. Он раз в 30 секунд, пока Agent Meter открыт, перечисляет процессы Claude Code, Codex и их MCP-серверов, отмечает запуски без транскрипта (`--no-session-persistence`, `codex exec --ephemeral`) и облачное окружение Codex (`exec-server --remote`), читает статус сессий из `~/.claude/sessions` и папки Remote Control Claude Desktop. В снимок `~/Library/Application Support/Agent Meter/agent-processes.json` попадают только названия, счётчики, память и рабочая папка запусков без окна. Командные строки и переменные окружения не сохраняются. Журнал запусков без транскрипта хранится 7 дней.
+
+```sh
+"build/Agent Meter.app/Contents/Helpers/AgentMeterRefresh" --install-processes
+"build/Agent Meter.app/Contents/Helpers/AgentMeterRefresh" --uninstall-processes
+```
+
 ## Доступ к данным
 
 - GUI работает в App Sandbox с доступом к явно выбранным папкам на чтение и security-scoped bookmarks. Точечные разрешения дают доступ к истории квот Claude Desktop, списку сессий Claude Desktop для диплинков, снимку Claude Statistics и числовым результатам фонового сборщика для Claude и Grok. Исходящие соединения используются для квот Z.ai и Kimi и отчётов OpenAI, Anthropic и xAI. Отчёты запрашиваются через GET на фиксированных адресах провайдеров.
@@ -120,7 +132,7 @@ Claude Desktop решает о разрешениях сам, параллель
 
 ![Окно Stats](preview/stats.png)
 
-Высоту окна **Stats** и **Settings** можно тянуть свободно, ширина фиксированная: содержимое свёрстано по сетке в 820 точек. Минимальная высота — 320 точек, всё, что не поместилось, уходит в прокрутку.
+Высоту окна **Stats** и **Settings** можно тянуть свободно, ширина фиксированная: содержимое свёрстано по сетке в 820 точек. Минимальная высота — 320 точек, всё, что не поместилось, уходит в прокрутку. Высоту панели в строке меню меняет ручка внизу, до полной высоты экрана; двойной щелчок по ней возвращает высоту по содержимому.
 
 Нативная разметка меню и окна, элементы графиков и гарнитура перенесены из [ContextBar](https://github.com/htahaozlu/context-bar/tree/89287a92ecac794022e08a3e1df944623dfc47d1/menubar) и адаптированы под локальные данные Agent Meter. Лицензии ContextBar и JetBrains Mono включены в `Packaging/Licenses` и в ресурсы приложения.
 

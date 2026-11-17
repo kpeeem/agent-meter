@@ -9,7 +9,7 @@ final class ProjectsOutlineView: NSScrollView, NSOutlineViewDataSource, NSOutlin
 
         init(_ usage: ProjectUsage) {
             self.usage = usage
-            sessions = usage.sessions.filter { !$0.isService }.map(SessionItem.init)
+            sessions = usage.sessions.map(SessionItem.init)
         }
     }
 
@@ -98,7 +98,14 @@ final class ProjectsOutlineView: NSScrollView, NSOutlineViewDataSource, NSOutlin
         case "name":
             return NSTextField(labelWithString: session.usage.lastActivity.formatted(.dateTime.month().day().hour().minute()))
         case "tokens": return tokenLabel(session.usage.tokens.total)
-        default: return NSTextField(labelWithString: session.usage.provider.title)
+        default:
+            let label = NSTextField(labelWithString: [session.usage.provider.title, session.usage.origin.badge]
+                .compactMap { $0 }.joined(separator: " · "))
+            if session.usage.origin != .interactive {
+                label.textColor = Palette.secondaryText
+                label.toolTip = session.usage.origin.title + ". " + session.usage.origin.detail
+            }
+            return label
         }
     }
 

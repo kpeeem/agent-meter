@@ -193,6 +193,16 @@ struct NotchActivityView: View {
                             .padding(.vertical, 1)
                             .background(session.provider.badgeColor.opacity(0.16), in: Capsule())
                             .fixedSize()
+                        if let badge = session.origin?.badge {
+                            Text(badge)
+                                .font(.system(size: 8, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.7))
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1)
+                                .overlay(Capsule().strokeBorder(.white.opacity(0.28), lineWidth: 0.5))
+                                .fixedSize()
+                                .help(session.origin?.title ?? "")
+                        }
                         Spacer(minLength: 4)
                         TimelineView(.periodic(from: .now, by: 5)) { context in
                             Text(NotchFormat.age(context.date.timeIntervalSince(session.updatedAt)))

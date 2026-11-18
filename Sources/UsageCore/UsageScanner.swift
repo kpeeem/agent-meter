@@ -120,7 +120,14 @@ public actor UsageScanner {
             }
         }
 
-        let headerQuotas = liveQuota.map { ClaudeQuota.readLiveQuota($0, now: now) } ?? []
+        let header = liveQuota.map { ClaudeQuota.readLiveQuota($0, now: now) }
+        let headerQuotas = header?.quotas ?? []
+        if let quota = header?.fable, quota.observedAt > (result.claudeFableQuota?.observedAt ?? .distantPast) {
+            result.claudeFableQuota = quota
+            result.claudeFableQuotaFromCode = false
+            result.claudeFableQuotaAutomatic = false
+            result.claudeFableQuotaLive = true
+        }
         for quota in headerQuotas {
             guard let index = result.claudeQuotas.firstIndex(where: { $0.window == quota.window }) else {
                 result.claudeQuotas.append(quota)

@@ -258,13 +258,15 @@ final class QuotaPopoverController: NSViewController {
             contents.append(row)
         }
         if provider == .claude, let quota = result.claudeFableQuota {
-            let stale = quota.isStale(at: now) || now.timeIntervalSince(quota.observedAt) >= 3600
+            let stale = quota.isStale(at: now)
+                || !result.claudeFableQuotaLive && now.timeIntervalSince(quota.observedAt) >= 3600
             let cachedFable = makeLimitRow(label: "Fable · 7-day", quota: quota, now: now, stale: stale) {
                 if stale { return "Stale" }
                 return Self.resetCaption($0.resetsAt, now: now)
                     ?? "Cached " + $0.observedAt.formatted(.dateTime.month(.abbreviated).day().hour().minute())
             }
-            let source = result.claudeFableQuotaAutomatic ? "Automatic refresh through Claude Code."
+            let source = result.claudeFableQuotaLive ? "Claude Code's own response headers."
+                : result.claudeFableQuotaAutomatic ? "Automatic refresh through Claude Code."
                 : result.claudeFableQuotaFromCode ? "Claude Code /usage cache." : "Claude Statistics cache."
             cachedFable.toolTip = [source, Self.resetTooltip(quota.resetsAt, observed: quota.observedAt)]
                 .compactMap { $0 }.joined(separator: " ")

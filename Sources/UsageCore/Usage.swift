@@ -159,6 +159,7 @@ public struct ScanResult: Sendable {
     public var claudeQuotasAutomatic = false
     public var claudeQuotasLive = false
     public var claudeFableQuotaAutomatic = false
+    public var claudeFableQuotaLive = false
     public var claudeModelQuotas: [ModelQuota] = []
     public var grok: GrokUsage?
     public var fableEstimateUSD: Double?

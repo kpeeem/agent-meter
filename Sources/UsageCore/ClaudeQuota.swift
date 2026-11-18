@@ -50,15 +50,20 @@ public enum ClaudeQuota {
         guard rename(temporary, destination) == 0 else { throw POSIXError(.EIO) }
     }
 
-    public static func readLiveQuota(_ url: URL, now: Date = .now) -> [Quota] {
+    static func readLiveQuota(_ url: URL, now: Date = .now) -> Snapshot {
         guard let file = try? openLog(url), let bytes = try? file.read(upToCount: 65_537), bytes.count <= 65_536,
               let live = try? JSONDecoder().decode(LiveQuota.self, from: bytes), live.version == 1,
-              let observedAt = timestamp(live.observedAt), observedAt <= now.addingTimeInterval(60) else { return [] }
-        let windows = [(QuotaWindow.fiveHours, live.fiveHour), (.sevenDays, live.sevenDay)]
-        return windows.compactMap { window, value in
-            value.flatMap { Quota(window: window, used: $0.percentUsed, observedAt: observedAt,
-                                  resetEpoch: timestamp($0.resetsAt)?.timeIntervalSince1970) }
+              let observedAt = timestamp(live.observedAt), observedAt <= now.addingTimeInterval(60)
+        else { return Snapshot(quotas: [], fable: nil) }
+        func quota(_ window: QuotaWindow, _ value: LiveQuota.Window?) -> Quota? {
+            value.flatMap {
+                Quota(window: window, used: $0.percentUsed,
+                      observedAt: min(timestamp($0.observedAt) ?? observedAt, observedAt),
+                      resetEpoch: timestamp($0.resetsAt)?.timeIntervalSince1970)
+            }
         }
+        return Snapshot(quotas: [quota(.fiveHours, live.fiveHour), quota(.sevenDays, live.sevenDay)].compactMap { $0 },
+                        fable: quota(.sevenDays, live.fable))
     }
 
     private struct LiveQuota: Decodable {
@@ -66,10 +71,12 @@ public enum ClaudeQuota {
         let observedAt: String
         let fiveHour: Window?
         let sevenDay: Window?
+        let fable: Window?
 
         struct Window: Decodable {
             let percentUsed: Double
             let resetsAt: String?
+            let observedAt: String?
         }
     }
 

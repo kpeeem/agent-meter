@@ -85,6 +85,8 @@ struct NotchAnnouncements {
 
 @MainActor
 final class NotchController {
+    static let backgroundCardsKey = "notch.background-cards"
+
     var onPeek: (() -> Void)?
 
     private let panel = NotchPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel],
@@ -283,7 +285,9 @@ final class NotchController {
         loadHooks()
         current = sessions(now: now)
         if enabled {
-            for card in announcements.cards(for: current, now: now) { handle(card) }
+            let announced = UserDefaults.standard.bool(forKey: Self.backgroundCardsKey)
+                ? current : current.filter { $0.origin == nil || $0.request != nil }
+            for card in announcements.cards(for: announced, now: now) { handle(card) }
             pruneCards(now: now)
         }
         render(now: now)

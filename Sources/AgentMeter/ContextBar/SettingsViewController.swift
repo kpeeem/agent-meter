@@ -52,6 +52,9 @@ final class SettingsViewController: PreferencePaneViewController {
         let resume = NSButton(checkboxWithTitle: "Copy claude --resume when a chat is not in Claude Desktop", target: self,
                               action: #selector(toggleCopyResume(_:)))
         resume.state = SessionFocus.copiesResume ? .on : .off
+        let background = NSButton(checkboxWithTitle: "Pop up cards for subagents, Guardian reviews and other background runs",
+                                  target: self, action: #selector(toggleBackgroundCards(_:)))
+        background.state = UserDefaults.standard.bool(forKey: NotchController.backgroundCardsKey) ? .on : .off
         notchProvider.addItems(withTitles: Provider.allCases.map(\.title))
         notchProvider.setAccessibilityLabel("Hook provider")
         let setup = NSButton(title: "Copy install command", target: self, action: #selector(copyHookCommand(_:)))
@@ -61,6 +64,7 @@ final class SettingsViewController: PreferencePaneViewController {
                    symbol: "waveform", body: verticalStack([
                        horizontalStack([notch, flexibleSpacer()]),
                        horizontalStack([resume, flexibleSpacer()]),
+                       horizontalStack([background, flexibleSpacer()]),
                        horizontalStack([notchProvider, setup, removal, flexibleSpacer()]),
                    ]))
 
@@ -442,6 +446,10 @@ final class SettingsViewController: PreferencePaneViewController {
 
     @objc private func toggleCopyResume(_ sender: NSButton) {
         UserDefaults.standard.set(sender.state == .on, forKey: SessionFocus.copyResumeKey)
+    }
+
+    @objc private func toggleBackgroundCards(_ sender: NSButton) {
+        UserDefaults.standard.set(sender.state == .on, forKey: NotchController.backgroundCardsKey)
     }
 
     @objc private func enableAutomatic() {

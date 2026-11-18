@@ -93,10 +93,6 @@ final class QuotaPopoverController: NSViewController {
             guard let self else { return }
             rebuild(model.result)
         }.store(in: &updates)
-        model.$claudeRefreshing.combineLatest(model.$claudeRefreshNote).dropFirst().sink { [weak self] _ in
-            guard let self else { return }
-            DispatchQueue.main.async { self.rebuild(self.model.result) }
-        }.store(in: &updates)
     }
 
     func prepareToShow(availableScreenHeight: CGFloat? = nil) {
@@ -185,7 +181,6 @@ final class QuotaPopoverController: NSViewController {
         let desktop = provider == .claude && result.claudeQuotasFromDesktop
         let title = Typography.caption(provider.title)
         let header = horizontalStack([title, flexibleSpacer()], alignment: .firstBaseline)
-        let live = provider == .claude ? result.automaticClaude : nil
         if provider == .codex, result.codexQuotasLive {
             let plan = result.codexLive?.plan.map { " · " + $0 } ?? ""
             let source = NSTextField(labelWithString: "Live" + plan)
@@ -203,23 +198,11 @@ final class QuotaPopoverController: NSViewController {
             source.toolTip = "Limits read from Claude Code's own response headers, seen " +
                 (seen?.formatted(.dateTime.hour().minute()) ?? "")
             header.addArrangedSubview(source)
-        } else if desktop || (provider == .claude && result.claudeQuotasAutomatic) {
-            let checked = live.map { " · " + $0.attemptedAt.formatted(.dateTime.hour().minute()) } ?? ""
-            let source = NSTextField(labelWithString: desktop ? "Desktop cache" : "Automatic" + checked)
+        } else if desktop {
+            let source = NSTextField(labelWithString: "Desktop cache")
             source.font = .systemFont(ofSize: 10)
             source.textColor = Palette.secondaryText
             header.addArrangedSubview(source)
-        }
-        if live != nil {
-            let reload = NSButton(image: NSImage(systemSymbolName: "arrow.clockwise",
-                                                 accessibilityDescription: "Refresh Claude limits") ?? NSImage(),
-                                  target: self, action: #selector(refreshClaude))
-            reload.isBordered = false
-            reload.symbolConfiguration = .init(pointSize: 10, weight: .medium)
-            reload.contentTintColor = Palette.secondaryText
-            reload.toolTip = "Ask Claude Code for current limits now"
-            reload.isEnabled = !model.claudeRefreshing
-            header.addArrangedSubview(reload)
         }
 
         let quotas = result.quotas(for: provider)
@@ -238,18 +221,6 @@ final class QuotaPopoverController: NSViewController {
         let total = makeSimpleStatRow(label: "Tokens · \(model.days)d",
                                       value: tokens.total.formatted(.number.notation(.compactName)))
         var contents: [NSView] = [header]
-        if let live {
-            if model.claudeRefreshing {
-                contents.append(note("Asking Claude Code for current limits…"))
-            } else if let text = model.claudeRefreshNote {
-                contents.append(note(text, color: Palette.urgencyRed))
-            } else if model.claudeScheduleStopped {
-                contents.append(note(live.message(at: now, stopped: true),
-                                     color: result.claudeQuotasLive ? nil : Palette.urgencyRed))
-            } else if live.status != .ready {
-                contents.append(note(live.message(at: now), color: live.status == .needsLogin ? Palette.urgencyRed : nil))
-            }
-        }
         if provider == .codex, let codex = result.codexLive, [.expired, .throttled].contains(codex.status) {
             contents.append(note(codex.status.message))
         }
@@ -266,7 +237,6 @@ final class QuotaPopoverController: NSViewController {
                     ?? "Cached " + $0.observedAt.formatted(.dateTime.month(.abbreviated).day().hour().minute())
             }
             let source = result.claudeFableQuotaLive ? "Claude Code's own response headers."
-                : result.claudeFableQuotaAutomatic ? "Automatic refresh through Claude Code."
                 : result.claudeFableQuotaFromCode ? "Claude Code /usage cache." : "Claude Statistics cache."
             cachedFable.toolTip = [source, Self.resetTooltip(quota.resetsAt, observed: quota.observedAt)]
                 .compactMap { $0 }.joined(separator: " ")
@@ -280,9 +250,6 @@ final class QuotaPopoverController: NSViewController {
                         : Self.resetCaption($0.resetsAt, now: now) ?? "Reset unavailable"
                 }
                 contents += [DividerView(), row]
-            }
-            if let note = missingResetNote(result, quotas: quotas, now: now) {
-                contents.append(note)
             }
         }
         if provider == .codex, let resets = result.codexLive?.resets, resets > 0 {
@@ -500,12 +467,6 @@ final class QuotaPopoverController: NSViewController {
         return verticalStack([header, bar, horizontalStack([warning, flexibleSpacer()])], spacing: 5)
     }
 
-    private func missingResetNote(_ result: ScanResult, quotas: [Quota], now: Date) -> NSView? {
-        guard result.automaticClaude == nil,
-              quotas.contains(where: { $0.resetsAt == nil && !$0.isStale(at: now) }) else { return nil }
-        return note("Reset times need automatic refresh. Turn it on in Settings → Claude account.")
-    }
-
     private func note(_ text: String, color: NSColor? = nil) -> NSView {
         let label = NSTextField(wrappingLabelWithString: text)
         label.font = .systemFont(ofSize: 10)
@@ -552,13 +513,6 @@ final class QuotaPopoverController: NSViewController {
 
     private func buildAttention(_ result: ScanResult, now: Date) -> NSView? {
         var notes: [(text: String, urgent: Bool)] = []
-        if let live = result.automaticClaude, live.separateSignIn == true {
-            let refused = live.status == .throttled
-                && live.throttledSince.map { now.timeIntervalSince($0) >= 2 * ClaudeLiveUsage.throttleBackoff } == true
-            if live.status == .needsLogin || refused {
-                notes.append(("Claude sign-in for Agent Meter needs renewing", true))
-            }
-        }
         if let usable = result.codexLive?.usableResets, usable > 0 {
             notes.append(("Codex · \(usable == 1 ? "a limit reset is" : "\(usable) limit resets are") ready to use", false))
         }
@@ -623,7 +577,6 @@ final class QuotaPopoverController: NSViewController {
     @objc private func showSettings() { onShowSettings?() }
     @objc private func showActivity() { onShowActivity?() }
     @objc private func refreshStats() { model.refresh(force: true) }
-    @objc private func refreshClaude() { model.refreshClaude() }
     @objc private func quitApp() { NSApp.terminate(nil) }
 }
 

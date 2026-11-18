@@ -77,10 +77,6 @@ public struct Quota: Codable, Sendable, Equatable, Identifiable {
         return now.timeIntervalSince(observedAt) >= Double(window.rawValue * 60)
     }
 
-    public func replacingReset(_ date: Date?) -> Quota {
-        Quota(window: window, used: used, observedAt: observedAt, resetEpoch: date?.timeIntervalSince1970) ?? self
-    }
-
     public func projectedExhaustion(at now: Date) -> Date? {
         guard let resetsAt, resetsAt > now, used < 100 else { return nil }
         let duration = Double(window.rawValue * 60)
@@ -155,10 +151,7 @@ public struct ScanResult: Sendable {
     public var claudeQuotasFromDesktop = false
     public var claudeFableQuota: Quota?
     public var claudeFableQuotaFromCode = false
-    public var automaticClaude: ClaudeLiveUsage?
-    public var claudeQuotasAutomatic = false
     public var claudeQuotasLive = false
-    public var claudeFableQuotaAutomatic = false
     public var claudeFableQuotaLive = false
     public var claudeModelQuotas: [ModelQuota] = []
     public var grok: GrokUsage?

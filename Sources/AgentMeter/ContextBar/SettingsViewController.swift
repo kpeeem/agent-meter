@@ -37,11 +37,10 @@ final class SettingsViewController: PreferencePaneViewController {
                    symbol: "creditcard", body: billingRows)
         automaticStatus.font = .systemFont(ofSize: 12)
         let enable = NSButton(title: "Enable automatic refresh…", target: self, action: #selector(enableAutomatic))
-        let login = NSButton(title: "Sign in for Agent Meter…", target: self, action: #selector(loginClaude))
-        addSection(title: "Claude account", subtitle: "The background collector reads limits and reset times through the official Claude Code client. A separate sign-in keeps your other sessions from using up its request budget.",
+        addSection(title: "Codex and Grok limits", subtitle: "A helper outside the App Sandbox checks live Codex and Grok limits every 5 minutes while Agent Meter is open. Claude limits come only from files that Claude Code and Claude Desktop write themselves: Agent Meter never starts Claude Code and never calls Claude.",
                    symbol: "gauge.with.dots.needle.50percent",
                    body: verticalStack([horizontalStack([automaticStatus, flexibleSpacer()]),
-                                        horizontalStack([enable, login, flexibleSpacer()])]))
+                                        horizontalStack([enable, flexibleSpacer()])]))
 
         let processes = NSButton(title: "List running agents…", target: self, action: #selector(enableProcesses))
         addSection(title: "Background agents", subtitle: "A helper outside the App Sandbox lists Claude Code, Codex and MCP processes every 30 seconds, including runs that keep no transcript. It saves only names, counts and memory, never command lines.",
@@ -89,8 +88,9 @@ final class SettingsViewController: PreferencePaneViewController {
         }.store(in: &updates)
         model.$result.sink { [weak self] result in
             guard let self else { return }
-            automaticStatus.stringValue = result.automaticClaude?.message(stopped: model.claudeScheduleStopped)
-                ?? "Enable the background collector for automatic account limits."
+            automaticStatus.stringValue = result.codexLive.map {
+                "Codex last checked " + $0.attemptedAt.formatted(.dateTime.month(.abbreviated).day().hour().minute())
+            } ?? "Turn on automatic refresh for live Codex and Grok limits."
         }.store(in: &updates)
         model.board.$config.removeDuplicates().sink { [weak self] config in
             self?.updateBoard(config)
@@ -444,19 +444,15 @@ final class SettingsViewController: PreferencePaneViewController {
         UserDefaults.standard.set(sender.state == .on, forKey: SessionFocus.copyResumeKey)
     }
 
-    @objc private func enableAutomatic() { showClaudeSetup(login: false) }
+    @objc private func enableAutomatic() {
+        guard let command = model.refreshSetupCommand() else { return }
+        showCommand(command, title: "Refresh Codex and Grok limits",
+                    action: "The command adds a background helper for your macOS account. Run it again with --uninstall to remove it.")
+    }
     @objc private func enableProcesses() {
         guard let command = model.processSetupCommand() else { return }
         showCommand(command, title: "List running agents",
                     action: "The command adds a background helper for your macOS account. Run it again with --uninstall-processes to remove it.")
-    }
-    @objc private func loginClaude() { showClaudeSetup(login: true) }
-
-    private func showClaudeSetup(login: Bool) {
-        guard let command = model.claudeSetupCommand(login: login) else { return }
-        showCommand(command, title: login ? "Sign in for Agent Meter" : "Enable automatic Claude refresh",
-                    action: login ? "Claude Code opens the claude.ai sign-in page. This sign-in is only for Agent Meter and does not change your main Claude Code session."
-                        : "The command enables the background collector for your macOS account.")
     }
 
     private func showCommand(_ command: String, title: String, action: String) {

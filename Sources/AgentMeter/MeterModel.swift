@@ -10,18 +10,11 @@ final class MeterModel: ObservableObject {
     @Published private(set) var updatedAt: Date?
     let accounts = ServiceAccounts()
     let board = BoardLink()
-    private let startedAt = Date.now
-
-    var claudeScheduleStopped: Bool {
-        result.automaticClaude?.scheduleStopped(watchingSince: startedAt) == true
-    }
     @Published private(set) var hiddenMenuItems = Set(UserDefaults.standard.stringArray(forKey: "menu-bar.hidden") ?? [])
     @Published var notchEnabled = UserDefaults.standard.object(forKey: "notch.enabled") as? Bool ?? true {
         didSet { UserDefaults.standard.set(notchEnabled, forKey: "notch.enabled") }
     }
     @Published var alert: String?
-    @Published private(set) var claudeRefreshing = false
-    @Published private(set) var claudeRefreshNote: String?
     @Published private(set) var quotaHistory = MeterModel.loadHistory()
     @Published var days = 7 {
         didSet {
@@ -78,7 +71,6 @@ final class MeterModel: ObservableObject {
         let generation = generation
         let desktopHistory = access.desktopQuotaHistory
         let statisticsCache = access.statisticsUsageCache
-        let automaticClaude = access.automaticClaudeUsage
         let liveQuota = access.claudeLiveQuota
         let grokUsage = access.grokUsage
         let codexUsage = access.codexUsage
@@ -86,7 +78,7 @@ final class MeterModel: ObservableObject {
         Task {
             let scoped = roots.filter { $0.value.startAccessingSecurityScopedResource() }
             var scan = await scanner.scan(scoped, days: days, desktopHistory: desktopHistory,
-                                          statisticsCache: statisticsCache, automaticClaude: automaticClaude,
+                                          statisticsCache: statisticsCache,
                                           liveQuota: liveQuota, grokUsage: grokUsage, codexUsage: codexUsage,
                                           agentProcesses: agentProcesses)
             for url in scoped.values { url.stopAccessingSecurityScopedResource() }
@@ -127,40 +119,13 @@ final class MeterModel: ObservableObject {
         return quote(helper.path) + " --install-processes"
     }
 
-    func refreshClaude() {
-        guard !claudeRefreshing, let request = access.claudeRefreshRequest,
-              let snapshot = access.automaticClaudeUsage else { return }
-        let requested = Date.now
-        do {
-            try Data().write(to: request)
-        } catch {
-            claudeRefreshNote = "Agent Meter could not ask the refresh helper. Turn on automatic refresh again in Settings → Claude account."
-            return
-        }
-        claudeRefreshing = true
-        claudeRefreshNote = nil
-        Task {
-            var answered = false
-            for _ in 0..<30 where !answered {
-                try? await Task.sleep(for: .seconds(2))
-                answered = ClaudeLiveUsage.read(snapshot).map { $0.attemptedAt >= requested.addingTimeInterval(-1) } == true
-            }
-            claudeRefreshing = false
-            if !answered {
-                claudeRefreshNote = "The refresh helper did not answer. Turn on automatic refresh again in Settings → Claude account."
-            }
-            refresh()
-        }
-    }
-
-    func claudeSetupCommand(login: Bool) -> String? {
+    func refreshSetupCommand() -> String? {
         let helper = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/AgentMeterRefresh")
         guard FileManager.default.isExecutableFile(atPath: helper.path) else {
-            alert = "Open the packaged app to configure automatic Claude refresh."
+            alert = "Open the packaged app to refresh Codex and Grok limits automatically."
             return nil
         }
-        let executable = quote(helper.path)
-        return login ? "\(executable) --login && \(executable) --refresh" : "\(executable) --install"
+        return quote(helper.path) + " --install"
     }
 
     func copyClaudeSetup() {

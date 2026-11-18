@@ -186,14 +186,7 @@ final class BoardLink: NSObject, ObservableObject {
 
     private func claudeState(_ result: ScanResult, now: Date) -> String {
         let quotas = result.claudeQuotas + [result.claudeFableQuota].compactMap { $0 }
-        if result.automaticClaude?.status == .needsLogin { return "expired" }
-        guard !quotas.isEmpty else {
-            switch result.automaticClaude?.status {
-            case .throttled: return "limit"
-            case .timedOut, .unavailable: return "err"
-            default: return "none"
-            }
-        }
+        guard !quotas.isEmpty else { return "none" }
         return quotas.contains { $0.isStale(at: now) } ? "stale" : "ok"
     }
 

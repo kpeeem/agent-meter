@@ -15,7 +15,7 @@ public actor UsageScanner {
     static let importBatchID = UUID(uuidString: "00000000-0000-4000-8000-1a7e2c0de0a1")!
 
     public func scan(_ roots: [LogSource: URL], days: Int, now: Date = .now,
-                     desktopHistory: URL? = nil, statisticsCache: URL? = nil, automaticClaude: URL? = nil,
+                     desktopHistory: URL? = nil, statisticsCache: URL? = nil,
                      liveQuota: URL? = nil, grokUsage: URL? = nil, codexUsage: URL? = nil,
                      agentProcesses: URL? = nil) -> ScanResult {
         var result = ScanResult()
@@ -76,7 +76,6 @@ public actor UsageScanner {
         files = refreshed
 
         var desktopQuotas: [Quota] = []
-        var automaticQuotas: [Quota] = []
         if let desktopHistory, result.claudeQuotas.allSatisfy({ $0.isStale(at: now) }) {
             let desktop = ClaudeQuota.readDesktopHistory(desktopHistory, now: now)
             if !desktop.isEmpty,
@@ -91,41 +90,13 @@ public actor UsageScanner {
             result.claudeFableQuota = quota
             result.claudeFableQuotaFromCode = false
         }
-        let statisticsModels = statisticsCache.map { ClaudeQuota.readStatisticsModelQuotas($0, now: now) } ?? []
-        result.claudeModelQuotas = ModelQuota.newest(statisticsModels)
-        if let automaticClaude, let live = ClaudeLiveUsage.read(automaticClaude) {
-            result.automaticClaude = live
-            result.claudeModelQuotas = ModelQuota.newest(statisticsModels,
-                                                         (live.models ?? []).filter { $0.quota.observedAt <= now })
-            for quota in live.quotas where quota.observedAt <= now {
-                guard let index = result.claudeQuotas.firstIndex(where: { $0.window == quota.window }) else {
-                    result.claudeQuotas.append(quota)
-                    continue
-                }
-                let current = result.claudeQuotas[index]
-                let cacheOnly = current.resetsAt == nil && !quota.isStale(at: now)
-                    && current.observedAt.timeIntervalSince(quota.observedAt) < 15 * 60
-                if current.observedAt < quota.observedAt || cacheOnly {
-                    result.claudeQuotas[index] = quota
-                } else if current.resetsAt == nil, let reset = quota.resetsAt, reset > current.observedAt {
-                    result.claudeQuotas[index] = current.replacingReset(reset)
-                }
-            }
-            automaticQuotas = live.quotas
-            if let quota = live.fable, quota.observedAt <= now,
-               quota.observedAt > (result.claudeFableQuota?.observedAt ?? .distantPast) {
-                result.claudeFableQuota = quota
-                result.claudeFableQuotaFromCode = true
-                result.claudeFableQuotaAutomatic = true
-            }
-        }
+        result.claudeModelQuotas = ModelQuota.newest(statisticsCache.map { ClaudeQuota.readStatisticsModelQuotas($0, now: now) } ?? [])
 
         let header = liveQuota.map { ClaudeQuota.readLiveQuota($0, now: now) }
         let headerQuotas = header?.quotas ?? []
         if let quota = header?.fable, quota.observedAt > (result.claudeFableQuota?.observedAt ?? .distantPast) {
             result.claudeFableQuota = quota
             result.claudeFableQuotaFromCode = false
-            result.claudeFableQuotaAutomatic = false
             result.claudeFableQuotaLive = true
         }
         for quota in headerQuotas {
@@ -142,7 +113,6 @@ public actor UsageScanner {
             }
         }
         result.claudeQuotasLive = fedBy(headerQuotas)
-        result.claudeQuotasAutomatic = fedBy(automaticQuotas)
         result.claudeQuotasFromDesktop = fedBy(desktopQuotas)
 
         let claudeLogs = refreshed.values.filter { $0.source.provider == .claude }.compactMap(\.parsed)

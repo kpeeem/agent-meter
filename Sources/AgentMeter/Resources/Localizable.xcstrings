@@ -769,13 +769,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Добавить ключ API…"
+            "value" : "Добавить ключ…"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dodaj klucz API…"
+            "value" : "Dodaj klucz…"
           }
         }
       }
@@ -785,13 +785,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Добавить ключ администратора…"
+            "value" : "Добавить ключ…"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dodaj klucz administratora…"
+            "value" : "Dodaj klucz…"
           }
         }
       }
@@ -801,13 +801,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Добавить ключ управления…"
+            "value" : "Добавить ключ…"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dodaj klucz zarządzania…"
+            "value" : "Dodaj klucz…"
           }
         }
       }
@@ -1026,13 +1026,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Разрешить"
+            "value" : "Да"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zezwól"
+            "value" : "Tak"
           }
         }
       }
@@ -1106,13 +1106,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Разрешать всегда"
+            "value" : "Всегда"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zawsze zezwalaj"
+            "value" : "Zawsze"
           }
         }
       }
@@ -1378,13 +1378,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Чтение кэша"
+            "value" : "Из кэша"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Odczyt cache"
+            "value" : "Z cache"
           }
         }
       }
@@ -1394,13 +1394,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Запись в кэш"
+            "value" : "В кэш"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zapis cache"
+            "value" : "Do cache"
           }
         }
       }
@@ -1831,13 +1831,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Закроется через %lld с"
+            "value" : "Ещё %lld с"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zamknie się za %lld s"
+            "value" : "Jeszcze %lld s"
           }
         }
       }
@@ -2432,13 +2432,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Скопировать команду установки"
+            "value" : "Команда установки"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kopiuj polecenie instalacji"
+            "value" : "Polecenie instalacji"
           }
         }
       }
@@ -2464,13 +2464,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Скопировать команду удаления"
+            "value" : "Команда удаления"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kopiuj polecenie usunięcia"
+            "value" : "Polecenie usunięcia"
           }
         }
       }
@@ -2512,13 +2512,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Скопировать настройку строки статуса"
+            "value" : "Скопировать statusLine"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kopiuj konfigurację linii statusu"
+            "value" : "Kopiuj statusLine"
           }
         }
       }
@@ -2576,13 +2576,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Запретить"
+            "value" : "Нет"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Odmów"
+            "value" : "Nie"
           }
         }
       }
@@ -3027,13 +3027,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Получить ключ API"
+            "value" : "Получить ключ"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uzyskaj klucz API"
+            "value" : "Uzyskaj klucz"
           }
         }
       }
@@ -3043,13 +3043,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Получить ключ администратора"
+            "value" : "Получить ключ"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uzyskaj klucz administratora"
+            "value" : "Uzyskaj klucz"
           }
         }
       }
@@ -3059,13 +3059,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Получить ключ управления"
+            "value" : "Получить ключ"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uzyskaj klucz zarządzania"
+            "value" : "Uzyskaj klucz"
           }
         }
       }
@@ -4569,13 +4569,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Показывать карточки для субагентов, проверок Guardian и других фоновых запусков"
+            "value" : "Карточки для субагентов, проверок Guardian и других фоновых задач"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pokazuj karty dla subagentów, przeglądów Guardian i innych zadań w tle"
+            "value" : "Karty dla subagentów, przeglądów Guardian i innych zadań w tle"
           }
         }
       }
@@ -5153,13 +5153,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сохранить баланс…"
+            "value" : "Баланс…"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zapisz saldo…"
+            "value" : "Saldo…"
           }
         }
       }
@@ -6163,13 +6163,13 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Обновить баланс…"
+            "value" : "Баланс…"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zaktualizuj saldo…"
+            "value" : "Saldo…"
           }
         }
       }

@@ -8,12 +8,12 @@ public struct GrokUsage: Codable, Sendable {
 
         public var message: String {
             switch self {
-            case .ready: "Weekly included usage through Grok Bot"
-            case .signedOut: "Sign in to Grok Bot to load the weekly limit."
-            case .keyDenied: "Allow access to “Grok Bot Safe Storage” in Keychain to read the Grok Bot session."
-            case .expired: "Open Grok Bot to refresh its sign-in."
-            case .noPlan: "This Grok account has no weekly included usage."
-            case .unavailable: "Grok usage temporarily unavailable. Will retry automatically."
+            case .ready: String(localized: "Weekly included usage through Grok Bot")
+            case .signedOut: String(localized: "Sign in to Grok Bot to load the weekly limit.")
+            case .keyDenied: String(localized: "Allow access to “Grok Bot Safe Storage” in Keychain to read the Grok Bot session.")
+            case .expired: String(localized: "Open Grok Bot to refresh its sign-in.")
+            case .noPlan: String(localized: "This Grok account has no weekly included usage.")
+            case .unavailable: String(localized: "Grok usage temporarily unavailable. Will retry automatically.")
             }
         }
     }

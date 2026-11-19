@@ -1,0 +1,52 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSAppleEventsUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent Meter uses Automation to focus the terminal session you choose in the notch."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent Meter używa automatyzacji, aby przełączyć się na sesję terminala wybraną w notchu."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent Meter использует автоматизацию, чтобы перейти к сессии терминала, которую вы выбрали в notch."
+          }
+        }
+      }
+    },
+    "NSBluetoothAlwaysUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent Meter sends your quota numbers to the e-paper quota board on your desk."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent Meter wysyła wartości limitów na tablicę z e-papierem, która stoi na Twoim biurku."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent Meter передаёт цифры ваших лимитов на табло с электронной бумагой у вас на столе."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

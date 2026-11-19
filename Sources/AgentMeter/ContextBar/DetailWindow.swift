@@ -81,9 +81,9 @@ final class DetailWindowController: NSWindowController {
         super.init(window: nil)
 
         tabs.tabStyle = .toolbar
-        addTab(StatsViewController(model: model), title: "Stats", icon: "chart.line.uptrend.xyaxis")
-        addTab(SettingsViewController(model: model), title: "Settings", icon: "gearshape")
-        addTab(AboutViewController(), title: "About", icon: "info.circle")
+        addTab(StatsViewController(model: model), title: String(localized: "Stats"), icon: "chart.line.uptrend.xyaxis")
+        addTab(SettingsViewController(model: model), title: String(localized: "Settings"), icon: "gearshape")
+        addTab(AboutViewController(), title: String(localized: "About"), icon: "info.circle")
 
         let size = DetailTabViewController.defaultContentSize
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: size),
@@ -240,7 +240,7 @@ private final class AboutViewController: PreferencePaneViewController {
         let identity = verticalStack([name, version], spacing: Spacing.xxs, alignment: .leading)
         addFullWidth(horizontalStack([icon, identity, flexibleSpacer()], spacing: Spacing.m))
         let credit = NSTextField(wrappingLabelWithString:
-            "Native interface adapted from ContextBar. Uses the JetBrains Mono typeface.")
-        addSection(title: "Credits", symbol: "info.circle", body: credit)
+            String(localized: "Native interface adapted from ContextBar. Uses the JetBrains Mono typeface."))
+        addSection(title: String(localized: "Credits"), symbol: "info.circle", body: credit)
     }
 }

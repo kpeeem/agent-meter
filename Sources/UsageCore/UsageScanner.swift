@@ -143,7 +143,7 @@ public actor UsageScanner {
         if let newest = imports.max() {
             let batch = NotchActivity(provider: .codex, session: Self.importBatchID, phase: .done, cwd: nil, host: nil,
                                       terminalID: nil, updatedAt: newest,
-                                      message: "Imported \(imports.count) Claude Code session\(imports.count == 1 ? "" : "s") into Codex",
+                                      message: String(localized: "Imported \(imports.count) Claude Code sessions into Codex"),
                                       origin: .codexImported)
             activityByID[batch.id] = batch
         }

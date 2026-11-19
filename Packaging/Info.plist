@@ -6,6 +6,14 @@
 	<string>AgentMeter</string>
 	<key>CFBundleIdentifier</key>
 	<string>local.agentmeter.mac</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>ru</string>
+		<string>pl</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>Agent Meter</string>
 	<key>CFBundleDisplayName</key>

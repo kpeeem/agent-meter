@@ -23,9 +23,10 @@ struct ServiceAccountProfile: Codable, Identifiable {
     func keyExpiry(at now: Date) -> String? {
         guard let expires = adminKey?.expiresAt else { return nil }
         let date = expires.formatted(.dateTime.month(.abbreviated).day())
-        guard expires > now else { return "Key expired " + date }
+        guard expires > now else { return String(localized: "Key expired \(date)") }
         let days = Int(ceil(expires.timeIntervalSince(now) / 86_400))
-        return "Key expires " + date + (days <= 14 ? " · in \(days) day\(days == 1 ? "" : "s")" : "")
+        let expiry = String(localized: "Key expires \(date)")
+        return days <= 14 ? expiry + " · " + String(localized: "in \(days) days") : expiry
     }
 
     func needsKeyAttention(at now: Date) -> Bool {
@@ -115,7 +116,7 @@ final class ServiceAccounts: ObservableObject {
                 } catch {
                     updated.message = (error as? ServiceUsageError)?.message
                         ?? (error as? AccountVault.VaultError)?.errorDescription
-                        ?? "Connection failed. Will retry automatically."
+                        ?? String(localized: "Connection failed. Will retry automatically.")
                     updated.nextRefresh = .now.addingTimeInterval(300)
                     if case .rateLimited(let until) = error as? ServiceUsageError { updated.nextRefresh = until }
                     switch error as? ServiceUsageError {
@@ -332,9 +333,9 @@ private struct AccountVault {
         case read, save, remove
         var errorDescription: String? {
             switch self {
-            case .read: "Agent Meter could not read the saved API key."
-            case .save: "Agent Meter could not save the API key."
-            case .remove: "Agent Meter could not remove the API key."
+            case .read: String(localized: "Agent Meter could not read the saved API key.")
+            case .save: String(localized: "Agent Meter could not save the API key.")
+            case .remove: String(localized: "Agent Meter could not remove the API key.")
             }
         }
     }

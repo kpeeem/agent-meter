@@ -34,10 +34,10 @@ final class ProjectsOutlineView: NSScrollView, NSOutlineViewDataSource, NSOutlin
         outline.columnAutoresizingStyle = .firstColumnOnlyAutoresizingStyle
         outline.style = .fullWidth
 
-        let name = makeColumn("name", title: "Project / session", width: 420)
+        let name = makeColumn("name", title: String(localized: "Project / session"), width: 420)
         outline.addTableColumn(name)
-        outline.addTableColumn(makeColumn("provider", title: "Provider", width: 118))
-        outline.addTableColumn(makeColumn("tokens", title: "Tokens", width: 100))
+        outline.addTableColumn(makeColumn("provider", title: String(localized: "Provider"), width: 118))
+        outline.addTableColumn(makeColumn("tokens", title: String(localized: "Tokens"), width: 100))
         outline.outlineTableColumn = name
         outline.dataSource = self
         outline.delegate = self
@@ -46,9 +46,9 @@ final class ProjectsOutlineView: NSScrollView, NSOutlineViewDataSource, NSOutlin
 
         let actions = NSMenu()
         actions.delegate = self
-        let open = actions.addItem(withTitle: "Open session", action: #selector(openClickedItem), keyEquivalent: "")
+        let open = actions.addItem(withTitle: String(localized: "Open session"), action: #selector(openClickedItem), keyEquivalent: "")
         open.target = self
-        actions.addItem(withTitle: "Copy resume command", action: #selector(copyClickedSession), keyEquivalent: "")
+        actions.addItem(withTitle: String(localized: "Copy resume command"), action: #selector(copyClickedSession), keyEquivalent: "")
             .target = self
         outline.menu = actions
     }
@@ -132,7 +132,7 @@ final class ProjectsOutlineView: NSScrollView, NSOutlineViewDataSource, NSOutlin
     private func tokenLabel(_ tokens: Int64) -> NSView {
         let label = NSTextField(labelWithString: tokens.formatted(.number.notation(.compactName)))
         label.font = Typography.mono(11, weight: .medium)
-        label.toolTip = tokens.formatted() + " tokens"
+        label.toolTip = String(localized: "\(tokens.formatted()) tokens")
         return label
     }
 

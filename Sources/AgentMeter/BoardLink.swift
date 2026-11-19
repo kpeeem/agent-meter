@@ -24,7 +24,7 @@ struct BoardConfig: Codable, Equatable {
         var battery: Bool
     }
 
-    static let themes = ["Paper", "Ink", "Mono"]
+    static let themes = [String(localized: "Paper"), String(localized: "Ink"), String(localized: "Mono")]
     static let intervals = [5, 10, 20, 30, 60, 120]
     var pushesQuota: Bool { source == 0 }
 }
@@ -35,12 +35,12 @@ final class BoardLink: NSObject, ObservableObject {
 
         var text: String {
             switch self {
-            case .off: "Off. Turn the link on to push numbers to the board."
-            case .starting: "Starting Bluetooth…"
-            case .unauthorized: "macOS denied Bluetooth access. Allow Agent Meter in System Settings → Privacy & Security → Bluetooth."
-            case .bluetoothOff: "Bluetooth is off. Turn it on to reach the board."
-            case .searching: "Looking for the board…"
-            case .connected: "Connected"
+            case .off: String(localized: "Off. Turn the link on to push numbers to the board.")
+            case .starting: String(localized: "Starting Bluetooth…")
+            case .unauthorized: String(localized: "macOS denied Bluetooth access. Allow Agent Meter in System Settings → Privacy & Security → Bluetooth.")
+            case .bluetoothOff: String(localized: "Bluetooth is off. Turn it on to reach the board.")
+            case .searching: String(localized: "Looking for the board…")
+            case .connected: String(localized: "Connected")
             }
         }
     }

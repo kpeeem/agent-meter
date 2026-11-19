@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "AgentMeter",
+    defaultLocalization: "en",
     platforms: [.macOS(.v14)],
     products: [
         .executable(name: "AgentMeter", targets: ["AgentMeter"]),
@@ -12,7 +13,7 @@ let package = Package(
     ],
     targets: [
         .target(name: "UsageCore"),
-        .executableTarget(name: "AgentMeter", dependencies: ["UsageCore"]),
+        .executableTarget(name: "AgentMeter", dependencies: ["UsageCore"], resources: [.process("Resources")]),
         .executableTarget(name: "AgentMeterStatus", dependencies: ["UsageCore"]),
         .executableTarget(name: "AgentMeterHook", dependencies: ["UsageCore"]),
         .executableTarget(name: "AgentMeterRefresh", dependencies: ["UsageCore"]),

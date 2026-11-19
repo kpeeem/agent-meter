@@ -34,33 +34,33 @@ final class StatsViewController: PreferencePaneViewController {
         buildHeatmap()
         history.translatesAutoresizingMaskIntoConstraints = false
         history.heightAnchor.constraint(equalToConstant: 200).isActive = true
-        addSection(title: "Limits history", subtitle: "Share of each limit used over the last 7 days. Dashed lines are 5-hour windows.",
+        addSection(title: String(localized: "Limits history"), subtitle: String(localized: "Share of each limit used over the last 7 days. Dashed lines are 5-hour windows."),
                    symbol: "chart.xyaxis.line", body: history)
-        addSection(title: "Background", subtitle: "Agents and helpers that run without a window of their own, including runs that keep no transcript.",
+        addSection(title: String(localized: "Background"), subtitle: String(localized: "Agents and helpers that run without a window of their own, including runs that keep no transcript."),
                    symbol: "eye", body: background)
         buildBottomGrid()
         projects.onOpenSession = { [weak model] in model?.openSession($0) }
         projects.onCopyResume = { [weak model] in model?.copyResume($0) }
-        addSection(title: "Projects", subtitle: "Expand a project to see its sessions.",
+        addSection(title: String(localized: "Projects"), subtitle: String(localized: "Expand a project to see its sessions."),
                    symbol: "folder", body: projects)
         model.$result.sink { [weak self] result in self?.render(result) }.store(in: &updates)
         model.$quotaHistory.sink { [weak self] _ in self?.renderHistory() }.store(in: &updates)
     }
 
     private func buildHeader() {
-        let title = NSTextField(labelWithString: "Activity")
+        let title = NSTextField(labelWithString: String(localized: "Activity"))
         title.font = .systemFont(ofSize: 17, weight: .semibold)
-        let subtitle = NSTextField(labelWithString: "Claude Code and Codex sessions on this Mac")
+        let subtitle = NSTextField(labelWithString: String(localized: "Claude Code and Codex sessions on this Mac"))
         subtitle.font = .systemFont(ofSize: 11.5)
         subtitle.textColor = Palette.secondaryText
         let heading = verticalStack([title, subtitle], spacing: 2, alignment: .leading)
-        let providers = PillSegmentedControl(options: ["Both", "Claude", "Codex"]) { [weak self] index in
+        let providers = PillSegmentedControl(options: [String(localized: "Both"), "Claude", "Codex"]) { [weak self] index in
             guard let self else { return }
             provider = index == 0 ? nil : Provider.allCases[index - 1]
             render(model.result)
             renderHistory()
         }
-        let ranges = PillSegmentedControl(options: ["30d", "7d"], selectedIndex: model.days == 7 ? 1 : 0) {
+        let ranges = PillSegmentedControl(options: [String(localized: "\(30)d"), String(localized: "\(7)d")], selectedIndex: model.days == 7 ? 1 : 0) {
             [weak model] index in model?.days = index == 0 ? 30 : 7
         }
         let controls = horizontalStack([providers, ranges], spacing: Spacing.xs)
@@ -80,18 +80,18 @@ final class StatsViewController: PreferencePaneViewController {
         heatmapCaption.textColor = Palette.secondaryText
         let stack = verticalStack([heatmap, heatmapCaption], alignment: .leading)
         heatmap.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        addSection(title: "Activity calendar", subtitle: "Each cell is one day. The selected range supplies the totals.",
+        addSection(title: String(localized: "Activity calendar"), subtitle: String(localized: "Each cell is one day. The selected range supplies the totals."),
                    symbol: "square.grid.3x3", body: stack)
     }
 
     private func buildBottomGrid() {
         compositionTotal.font = Typography.mono(11)
         compositionTotal.textColor = Palette.secondaryText
-        let compositionHeader = horizontalStack([Typography.caption("Token composition"), flexibleSpacer(), compositionTotal],
+        let compositionHeader = horizontalStack([Typography.caption(String(localized: "Token composition")), flexibleSpacer(), compositionTotal],
                                                 alignment: .firstBaseline)
         let compositionCard = MenubarCardView(content: verticalStack([compositionHeader, composition], spacing: Spacing.s),
                                               horizontal: Spacing.m, vertical: Spacing.m)
-        let projectStack = verticalStack([Typography.caption("Top projects"), topProjects],
+        let projectStack = verticalStack([Typography.caption(String(localized: "Top projects")), topProjects],
                                          spacing: Spacing.s, alignment: .leading)
         topProjects.widthAnchor.constraint(equalTo: projectStack.widthAnchor).isActive = true
         let projectCard = MenubarCardView(content: projectStack, horizontal: Spacing.m, vertical: Spacing.m)
@@ -107,12 +107,12 @@ final class StatsViewController: PreferencePaneViewController {
         let daily = result.dailyUsage.filter { provider == nil || provider == $0.provider }
         let activeDays = Set(daily.map(\.date)).count
         let numbers = [
-            ("Sessions", sessions.formatted()),
-            ("Tokens (in + out)", compact(totals.total)),
-            ("Active days", "\(activeDays)/\(model.days)"),
-            ("Projects", rows.count.formatted()),
-            ("Cached input", compact(totals.cached)),
-            ("Output tokens", compact(totals.output)),
+            (String(localized: "Sessions"), sessions.formatted()),
+            (String(localized: "Tokens (in + out)"), compact(totals.total)),
+            (String(localized: "Active days"), "\(activeDays.formatted())/\(model.days.formatted())"),
+            (String(localized: "Projects"), rows.count.formatted()),
+            (String(localized: "Cached input"), compact(totals.cached)),
+            (String(localized: "Output tokens"), compact(totals.output)),
         ]
         tiles.arrangedSubviews.forEach { $0.removeFromSuperview() }
         for offset in stride(from: 0, to: numbers.count, by: 3) {
@@ -124,12 +124,13 @@ final class StatsViewController: PreferencePaneViewController {
 
         renderCalendar(daily)
         renderBackground(result)
-        compositionTotal.stringValue = compact(totals.total) + " total"
+        compositionTotal.stringValue = String(localized: "\(compact(totals.total)) total")
         composition.segments = [
-            .init(label: "Input", value: UInt64(totals.input), color: Palette.accent),
-            .init(label: "Output", value: UInt64(totals.output), color: Palette.accent.withAlphaComponent(0.73)),
-            .init(label: "Cache read", value: UInt64(totals.cached), color: Palette.accent.withAlphaComponent(0.45)),
-            .init(label: "Cache write", value: UInt64(totals.cacheWrite), color: Palette.accent.withAlphaComponent(0.26)),
+            .init(label: String(localized: "Input"), value: UInt64(totals.input), color: Palette.accent),
+            .init(label: String(localized: "Output"), value: UInt64(totals.output), color: Palette.accent.withAlphaComponent(0.73)),
+            .init(label: String(localized: "Cache read"), value: UInt64(totals.cached), color: Palette.accent.withAlphaComponent(0.45)),
+            .init(label: String(localized: "Cache write"), value: UInt64(totals.cacheWrite),
+                  color: Palette.accent.withAlphaComponent(0.26)),
         ]
 
         topProjects.arrangedSubviews.forEach { $0.removeFromSuperview() }
@@ -141,7 +142,7 @@ final class StatsViewController: PreferencePaneViewController {
                 ))
             }
         } else {
-            let empty = NSTextField(labelWithString: "No usage in this period")
+            let empty = NSTextField(labelWithString: String(localized: "No usage in this period"))
             empty.textColor = Palette.secondaryText
             topProjects.addArrangedSubview(empty)
         }
@@ -169,14 +170,15 @@ final class StatsViewController: PreferencePaneViewController {
 
     private func updateHeatmapCaption(_ hover: YearHeatmapView.Day?) {
         guard let day = hover ?? selectedDay else {
-            heatmapCaption.stringValue = "Hover or select a day · \(model.days) days in scope"
+            heatmapCaption.stringValue = String(localized: "Hover or select a day · \(model.days) days in scope")
             return
         }
         let date = day.date.formatted(.dateTime.month(.abbreviated).day().year())
         if let tokens = day.tokens {
-            heatmapCaption.stringValue = "\(date) · \(compact(tokens)) tokens · \(day.sessions) sessions"
+            heatmapCaption.stringValue = [date, String(localized: "\(compact(tokens)) tokens"),
+                                          String(localized: "\(day.sessions) sessions")].joined(separator: " · ")
         } else {
-            heatmapCaption.stringValue = "\(date) · Outside the selected period"
+            heatmapCaption.stringValue = date + " · " + String(localized: "Outside the selected period")
         }
     }
 
@@ -185,20 +187,23 @@ final class StatsViewController: PreferencePaneViewController {
         let now = Date.now
         let snapshot = result.agentProcesses
         let time = Date.FormatStyle().hour().minute()
-        background.addArrangedSubview(heading("Running now", trailing: snapshot.map { "Checked " + $0.capturedAt.formatted(time) }))
+        background.addArrangedSubview(heading(String(localized: "Running now"), trailing: snapshot.map {
+            String(localized: "Checked \($0.capturedAt.formatted(time))")
+        }))
         if snapshot == nil {
-            background.addArrangedSubview(caption("Turn on Settings → Background agents to list running agent processes."))
+            background.addArrangedSubview(caption(String(localized: "Turn on Settings → Background agents to list running agent processes.")))
         } else if snapshot?.isFresh(at: now) == false {
-            background.addArrangedSubview(caption("This list is out of date. The background helper may be off: Settings → Background agents.",
+            background.addArrangedSubview(caption(String(localized: "This list is out of date. The background helper may be off: Settings → Background agents."),
                                                   color: Palette.urgencyAmber))
         }
         if let folders = snapshot?.remoteFolders, !folders.isEmpty, provider != .codex {
+            let places = folders.joined(separator: ", ")
             background.addArrangedSubview(row("Claude Remote Control",
-                                              detail: "Sessions can start from claude.ai or the phone in " + folders.joined(separator: ", "),
-                                              value: "On", tint: Palette.accent))
+                                              detail: String(localized: "Sessions can start from claude.ai or the phone in \(places)"),
+                                              value: String(localized: "On"), tint: Palette.accent))
         }
         for group in snapshot?.groups ?? [] where provider == nil || group.provider == provider {
-            background.addArrangedSubview(row(group.title, detail: describe(group, now: now),
+            background.addArrangedSubview(row(name(group.title), detail: describe(group, now: now),
                                               value: (group.count > 1 ? "\(group.count) × " : "") + memory(group.memoryMB),
                                               tint: group.kind == .remote || group.kind == .ephemeral ? Palette.accent : nil))
         }
@@ -206,49 +211,60 @@ final class StatsViewController: PreferencePaneViewController {
         let day = now.addingTimeInterval(-86_400)
         let seen = Dictionary(grouping: (snapshot?.seen ?? []).filter {
             $0.startedAt >= day && (provider == nil || $0.provider == provider)
-        }, by: { $0.title + " · " + $0.owner })
+        }, by: { name($0.title) + " · " + name($0.owner) })
         if !seen.isEmpty {
             background.addArrangedSubview(DividerView())
-            background.addArrangedSubview(heading("Seen in the last 24 hours", trailing: "Checked every 30 s"))
+            background.addArrangedSubview(heading(String(localized: "Seen in the last 24 hours"),
+                                                  trailing: String(localized: "Checked every 30 s")))
             for (title, runs) in seen.sorted(by: { $0.value.count > $1.value.count }) {
                 let last = runs.map(\.lastSeen).max() ?? now
                 let folders = Set(runs.compactMap { $0.cwd.map { ($0 as NSString).lastPathComponent } }).sorted()
-                background.addArrangedSubview(row(title, detail: (["last " + last.formatted(time)] + folders.prefix(3)).joined(separator: " · "),
-                                                  value: "\(runs.count) run\(runs.count == 1 ? "" : "s")"))
+                let lastSeen = String(localized: "last \(last.formatted(time))")
+                background.addArrangedSubview(row(title, detail: ([lastSeen] + folders.prefix(3)).joined(separator: " · "),
+                                                  value: String(localized: "\(runs.count) runs")))
             }
         }
 
         let hidden = result.background.filter { provider == nil || $0.origin.provider == provider }
         background.addArrangedSubview(DividerView())
-        background.addArrangedSubview(heading("Hidden work · \(model.days)d", trailing: "Already in the totals above"))
+        background.addArrangedSubview(heading(String(localized: "Hidden work · \(model.days)d"),
+                                              trailing: String(localized: "Already in the totals above")))
         if hidden.isEmpty {
-            background.addArrangedSubview(caption("No background sessions in this period."))
+            background.addArrangedSubview(caption(String(localized: "No background sessions in this period.")))
         }
         for usage in hidden {
-            let tokens = usage.tokens.total > 0 ? " · " + compact(usage.tokens.total) + " tokens" : ""
-            background.addArrangedSubview(row(usage.origin.title,
-                                              detail: usage.origin.detail + " · last " + usage.lastActivity.formatted(.dateTime.month(.abbreviated).day().hour().minute()),
-                                              value: "\(usage.runs) run\(usage.runs == 1 ? "" : "s")" + tokens))
+            let tokens = usage.tokens.total > 0 ? " · " + String(localized: "\(compact(usage.tokens.total)) tokens") : ""
+            let last = String(localized: "last \(usage.lastActivity.formatted(.dateTime.month(.abbreviated).day().hour().minute()))")
+            background.addArrangedSubview(row(usage.origin.title, detail: usage.origin.detail + " · " + last,
+                                              value: String(localized: "\(usage.runs) runs") + tokens))
         }
     }
 
     private func describe(_ group: AgentProcessGroup, now: Date) -> String {
-        let running = group.startedAt.map { "running " + QuotaPopoverController.countdown(now.timeIntervalSince($0)) }
+        let running = group.startedAt.map {
+            String(localized: "running \(QuotaPopoverController.countdown(now.timeIntervalSince($0)))")
+        }
         let folder = group.cwd.map { ($0 as NSString).abbreviatingWithTildeInPath }
+        let owner = name(group.owner)
         let parts: [String?]
         switch group.kind {
-        case .remote: parts = ["Cloud tasks can run commands on this Mac", running]
-        case .ephemeral: parts = ["Keeps no transcript", "started by " + group.owner, running, folder]
-        case .scripted: parts = ["Started by " + group.owner, running, folder]
-        case .session: parts = [group.owner, group.idle > 0 ? "\(group.idle) idle" : nil]
-        case .mcp: parts = ["MCP server for " + group.owner, group.count > 1 ? "one copy per session" : nil]
-        case .helper, .app: parts = [group.owner]
+        case .remote: parts = [String(localized: "Cloud tasks can run commands on this Mac"), running]
+        case .ephemeral: parts = [String(localized: "Keeps no transcript"), String(localized: "started by \(owner)"), running, folder]
+        case .scripted: parts = [String(localized: "Started by \(owner)"), running, folder]
+        case .session: parts = [owner, group.idle > 0 ? String(localized: "\(group.idle) idle") : nil]
+        case .mcp: parts = [String(localized: "MCP server for \(owner)"),
+                            group.count > 1 ? String(localized: "one copy per session") : nil]
+        case .helper, .app: parts = [owner]
         }
         return parts.compactMap { $0 }.joined(separator: " · ")
     }
 
+    private func name(_ title: String) -> String {
+        Bundle.main.localizedString(forKey: title, value: nil, table: nil)
+    }
+
     private func memory(_ megabytes: Int) -> String {
-        megabytes >= 1024 ? String(format: "%.1f GB", Double(megabytes) / 1024) : "\(megabytes) MB"
+        (Int64(megabytes) * 1_048_576).formatted(.byteCount(style: .memory))
     }
 
     private func heading(_ text: String, trailing: String?) -> NSView {
@@ -326,7 +342,7 @@ private struct QuotaHistoryChart: View {
             .chartYAxis {
                 AxisMarks(values: [0, 50, 100]) { value in
                     AxisGridLine()
-                    AxisValueLabel { Text("\(value.as(Int.self) ?? 0)%") }
+                    AxisValueLabel { Text((Double(value.as(Int.self) ?? 0) / 100).formatted(.percent)) }
                 }
             }
             .chartLegend(position: .top, alignment: .leading)

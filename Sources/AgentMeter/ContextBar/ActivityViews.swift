@@ -37,7 +37,7 @@ final class YearHeatmapView: NSView {
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         setAccessibilityRole(.image)
-        setAccessibilityLabel("Activity heatmap")
+        setAccessibilityLabel(String(localized: "Activity heatmap"))
     }
     required init?(coder: NSCoder) { fatalError() }
 
@@ -64,7 +64,7 @@ final class YearHeatmapView: NSView {
 
     private func updateA11y() {
         let active = values.filter { ($0.tokens ?? 0) > 0 }.count
-        setAccessibilityValue("\(active) active days in the selected period")
+        setAccessibilityValue(String(localized: "\(active) active days in the selected period"))
     }
 
     private func metrics() -> (cell: CGFloat, ox: CGFloat, oy: CGFloat)? {
@@ -151,9 +151,9 @@ final class YearHeatmapView: NSView {
     }
 
     private func drawWeekdayLabels(_ m: (cell: CGFloat, ox: CGFloat, oy: CGFloat)) {
-        let names = ["Mon", "", "Wed", "", "Fri", "", ""]
+        let names = Self.calendar.shortWeekdaySymbols
         for row in [0, 2, 4] {
-            let s = NSAttributedString(string: names[row], attributes: labelAttrs())
+            let s = NSAttributedString(string: names[(row + 1) % 7], attributes: labelAttrs())
             let r = cellRect(col: 0, row: row, m)
             let size = s.size()
             s.draw(at: NSPoint(x: max(0, m.ox - size.width - 6), y: r.midY - size.height / 2))
@@ -161,16 +161,13 @@ final class YearHeatmapView: NSView {
     }
 
     private func drawMonthLabels(_ m: (cell: CGFloat, ox: CGFloat, oy: CGFloat)) {
-        let fmt = DateFormatter()
-        fmt.locale = .current
-        fmt.dateFormat = "MMM"
         var lastMonth = -1
         for col in 0..<cols {
             guard let rep = grid[col].compactMap({ $0 }).first else { continue }
             let month = Self.calendar.component(.month, from: rep.date)
             if month != lastMonth {
                 lastMonth = month
-                let s = NSAttributedString(string: fmt.string(from: rep.date), attributes: labelAttrs())
+                let s = NSAttributedString(string: rep.date.formatted(.dateTime.month(.abbreviated)), attributes: labelAttrs())
                 let x = m.ox + CGFloat(col) * (m.cell + gap)
                 s.draw(at: NSPoint(x: x, y: max(0, m.oy - 14)))
             }
@@ -181,8 +178,8 @@ final class YearHeatmapView: NSView {
         let sw: CGFloat = 9, sgap: CGFloat = 3
         let levels: [CGFloat] = [0.08, 0.28, 0.52, 0.76, 1.0]
         let y = bounds.height - bottomGutter + 4
-        let less = NSAttributedString(string: "Less", attributes: labelAttrs())
-        let more = NSAttributedString(string: "More", attributes: labelAttrs())
+        let less = NSAttributedString(string: String(localized: "Less"), attributes: labelAttrs())
+        let more = NSAttributedString(string: String(localized: "More"), attributes: labelAttrs())
         let swatchesW = CGFloat(levels.count) * sw + CGFloat(levels.count - 1) * sgap
         let totalW = less.size().width + 6 + swatchesW + 6 + more.size().width
         var x = bounds.width - totalW
@@ -256,7 +253,7 @@ final class SegmentedCompositionView: NSView {
     var segments: [Segment] = [] {
         didSet {
             needsDisplay = true
-            setAccessibilityLabel("Token composition")
+            setAccessibilityLabel(String(localized: "Token composition"))
             setAccessibilityValue(segments.map { "\($0.label) \($0.value.formatted())" }.joined(separator: ", "))
         }
     }
@@ -298,7 +295,7 @@ final class SegmentedCompositionView: NSView {
         let ly = legendTop
         let dot: CGFloat = 9
         for seg in segments {
-            let pct = total > 0 ? Int((Double(seg.value) / total * 100).rounded()) : 0
+            let share = total > 0 ? Double(seg.value) / total : 0
             let swatch = NSBezierPath(roundedRect: NSRect(x: lx, y: ly + 1, width: dot, height: dot),
                                       xRadius: 2, yRadius: 2)
             seg.color.setFill()
@@ -308,7 +305,7 @@ final class SegmentedCompositionView: NSView {
                 .font: NSFont.systemFont(ofSize: 11, weight: .regular),
                 .foregroundColor: Palette.secondaryText,
             ])
-            attr.append(NSAttributedString(string: "\(pct)%", attributes: [
+            attr.append(NSAttributedString(string: share.formatted(.percent.precision(.fractionLength(0))), attributes: [
                 .font: Typography.mono(11, weight: .semibold),
                 .foregroundColor: Palette.primaryText,
             ]))

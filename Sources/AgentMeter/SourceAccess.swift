@@ -22,9 +22,9 @@ final class SourceAccess {
     func choose(_ source: LogSource) throws -> Bool {
         let panel = NSOpenPanel()
         panel.appearance = NSAppearance(named: .darkAqua)
-        panel.title = "Connect \(source.provider.title) logs"
-        panel.message = "Choose the \(source.folder) folder to grant read-only access."
-        panel.prompt = "Connect"
+        panel.title = String(localized: "Connect \(source.provider.title) logs")
+        panel.message = String(localized: "Choose the \(source.folder) folder to grant read-only access.")
+        panel.prompt = String(localized: "Connect")
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.canCreateDirectories = false
@@ -100,8 +100,8 @@ enum AccessError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .wrongFolder(let folder): "Choose the \(folder) folder itself."
-        case .helperMissing: "Build and open the packaged app to use the status line helper."
+        case .wrongFolder(let folder): String(localized: "Choose the \(folder) folder itself.")
+        case .helperMissing: String(localized: "Build and open the packaged app to use the status line helper.")
         }
     }
 }

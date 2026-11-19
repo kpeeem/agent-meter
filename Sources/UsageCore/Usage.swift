@@ -52,7 +52,7 @@ public enum QuotaWindow: Int, CaseIterable, Codable, Sendable, Identifiable {
     case sevenDays = 10080
 
     public var id: Self { self }
-    public var title: String { self == .fiveHours ? "5h" : "7d" }
+    public var title: String { self == .fiveHours ? String(localized: "5h") : String(localized: "7d") }
 }
 
 public struct Quota: Codable, Sendable, Equatable, Identifiable {
@@ -133,7 +133,7 @@ public struct ProjectUsage: Identifiable, Sendable {
     public let path: String
     public let tokens: Tokens
     public let sessions: [SessionUsage]
-    public var name: String { path.isEmpty ? "Unknown project" : (path as NSString).lastPathComponent }
+    public var name: String { path.isEmpty ? String(localized: "Unknown project") : (path as NSString).lastPathComponent }
 }
 
 public struct DailyUsage: Sendable {

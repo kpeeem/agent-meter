@@ -9,11 +9,11 @@ public struct CodexLiveUsage: Codable, Sendable {
 
         public var message: String {
             switch self {
-            case .ready: "Live limits from ChatGPT"
-            case .signedOut: "Sign in to Codex with ChatGPT to load live limits."
-            case .expired: "Codex sign-in needs renewing. Open Codex once and live limits come back."
-            case .throttled: "ChatGPT rate-limited the limits request. Next try in an hour."
-            case .unavailable: "Live Codex limits temporarily unavailable. Showing session logs."
+            case .ready: String(localized: "Live limits from ChatGPT")
+            case .signedOut: String(localized: "Sign in to Codex with ChatGPT to load live limits.")
+            case .expired: String(localized: "Codex sign-in needs renewing. Open Codex once and live limits come back.")
+            case .throttled: String(localized: "ChatGPT rate-limited the limits request. Next try in an hour.")
+            case .unavailable: String(localized: "Live Codex limits temporarily unavailable. Showing session logs.")
             }
         }
     }

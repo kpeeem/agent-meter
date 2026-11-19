@@ -113,7 +113,7 @@ final class MeterModel: ObservableObject {
     func processSetupCommand() -> String? {
         let helper = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/AgentMeterRefresh")
         guard FileManager.default.isExecutableFile(atPath: helper.path) else {
-            alert = "Open the packaged app to list background agent processes."
+            alert = String(localized: "Open the packaged app to list background agent processes.")
             return nil
         }
         return quote(helper.path) + " --install-processes"
@@ -122,7 +122,7 @@ final class MeterModel: ObservableObject {
     func refreshSetupCommand() -> String? {
         let helper = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/AgentMeterRefresh")
         guard FileManager.default.isExecutableFile(atPath: helper.path) else {
-            alert = "Open the packaged app to refresh Codex and Grok limits automatically."
+            alert = String(localized: "Open the packaged app to refresh Codex and Grok limits automatically.")
             return nil
         }
         return quote(helper.path) + " --install"
@@ -137,7 +137,7 @@ final class MeterModel: ObservableObject {
             let settings = ["statusLine": ["type": "command", "command": command]]
             let data = try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
             copy(String(decoding: data, as: UTF8.self))
-            alert = "Status line configuration copied. Merge statusLine into Claude Code settings. Use your existing command in a wrapper if you want to keep its display."
+            alert = String(localized: "Status line configuration copied. Merge statusLine into Claude Code settings. Use your existing command in a wrapper if you want to keep its display.")
         } catch {
             alert = error.localizedDescription
         }
@@ -148,7 +148,7 @@ final class MeterModel: ObservableObject {
         Task {
             switch await SessionFocus.open(NotchActivity.recent(session)) {
             case .opened: break
-            case .copied: alert = "Resume command copied."
+            case .copied: alert = String(localized: "Resume command copied.")
             case .failed(let message): alert = message
             }
         }
@@ -156,15 +156,15 @@ final class MeterModel: ObservableObject {
 
     func openCodexPlugin(_ text: String) {
         guard let url = Provider.codexPluginURL(text) else {
-            alert = "Enter a Codex plugin detail link in the form codex://plugins/<id>."
+            alert = String(localized: "Enter a Codex plugin detail link in the form codex://plugins/<id>.")
             return
         }
-        if !NSWorkspace.shared.open(url) { alert = "macOS could not open the Codex link." }
+        if !NSWorkspace.shared.open(url) { alert = String(localized: "macOS could not open the Codex link.") }
     }
 
     func copyResume(_ session: SessionUsage) {
         copy(session.provider.resumeCommand(session.sessionID))
-        alert = "Resume command copied."
+        alert = String(localized: "Resume command copied.")
     }
 
     private func copy(_ text: String) {
@@ -198,7 +198,7 @@ final class MeterModel: ObservableObject {
             do {
                 roots[source] = try access.url(for: source)
             } catch {
-                alert = "Reconnect the \(source.folder) folder to restore read access."
+                alert = String(localized: "Reconnect the \(source.folder) folder to restore read access.")
             }
         }
     }

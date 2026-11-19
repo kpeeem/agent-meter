@@ -9,27 +9,27 @@ public enum WorkOrigin: String, Codable, Sendable, CaseIterable {
 
     public var title: String {
         switch self {
-        case .interactive: "Your sessions"
-        case .claudeSubagent: "Claude subagents"
-        case .claudeScripted: "Scripted Claude runs"
-        case .codexGuardian: "Codex Guardian reviews"
-        case .codexSubagent: "Codex subagents"
-        case .codexScripted: "Scripted Codex runs"
-        case .codexImported: "Claude sessions imported into Codex"
-        case .codexService: "Other Codex background threads"
+        case .interactive: String(localized: "Your sessions")
+        case .claudeSubagent: String(localized: "Claude subagents")
+        case .claudeScripted: String(localized: "Scripted Claude runs")
+        case .codexGuardian: String(localized: "Codex Guardian reviews")
+        case .codexSubagent: String(localized: "Codex subagents")
+        case .codexScripted: String(localized: "Scripted Codex runs")
+        case .codexImported: String(localized: "Claude sessions imported into Codex")
+        case .codexService: String(localized: "Other Codex background threads")
         }
     }
 
     public var detail: String {
         switch self {
         case .interactive: ""
-        case .claudeSubagent: "Task agents your Claude sessions started"
-        case .claudeScripted: "claude -p from scripts, scheduled jobs and SDK apps"
-        case .codexGuardian: "Automatic model reviews of risky commands"
-        case .codexSubagent: "Agents your Codex threads spawned"
-        case .codexScripted: "codex exec from scripts and jobs"
-        case .codexImported: "The Codex app copies Claude Code transcripts into its own threads"
-        case .codexService: "Memory, titles and other service work"
+        case .claudeSubagent: String(localized: "Task agents your Claude sessions started")
+        case .claudeScripted: String(localized: "claude -p from scripts, scheduled jobs and SDK apps")
+        case .codexGuardian: String(localized: "Automatic model reviews of risky commands")
+        case .codexSubagent: String(localized: "Agents your Codex threads spawned")
+        case .codexScripted: String(localized: "codex exec from scripts and jobs")
+        case .codexImported: String(localized: "The Codex app copies Claude Code transcripts into its own threads")
+        case .codexService: String(localized: "Memory, titles and other service work")
         }
     }
 }

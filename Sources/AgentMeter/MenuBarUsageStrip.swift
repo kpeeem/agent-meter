@@ -7,7 +7,7 @@ final class MenuBarUsageStrip {
         let label: String
         let used: Double
 
-        var percent: String { "\(Int(used.rounded()))%" }
+        var percent: String { (used / 100).formatted(.percent.precision(.fractionLength(0))) }
     }
 
     private struct Reading {
@@ -16,6 +16,7 @@ final class MenuBarUsageStrip {
         let label: String
         let window: Window?
         var billing = false
+        var saved = false
         var cost: Decimal?
 
         var value: String {
@@ -48,7 +49,8 @@ final class MenuBarUsageStrip {
             readings.append(Reading(title: "Grok", icon: symbol(ServiceAccount.xai.symbol), label: "GK",
                                     window: Window(label: quota.window.title, used: quota.used)))
         }
-        let labels = ["5-hour rolling": "5h", "7-day rolling": "7d", "Monthly total": "1M", "MCP": "MCP"]
+        let labels = ["5-hour rolling": QuotaWindow.fiveHours.title, "7-day rolling": QuotaWindow.sevenDays.title,
+                      "Monthly total": String(localized: "1M"), "MCP": "MCP"]
         for service in services where !hidden.contains(service.id) {
             if service.provider.isBilling {
                 let icon = service.provider == .xai ? symbol(service.provider.symbol)
@@ -58,8 +60,9 @@ final class MenuBarUsageStrip {
                         ? nil : usage.billing
                 }
                 let credit = service.provider == .openAI && service.reportKeyID == nil ? service.creditBalance : nil
-                readings.append(Reading(title: service.title, icon: icon, label: credit == nil ? "MTD" : "SAVED",
-                                        window: nil, billing: true, cost: credit?.amountUSD ?? bill?.costUSD))
+                readings.append(Reading(title: service.title, icon: icon,
+                                        label: credit == nil ? String(localized: "MTD") : String(localized: "SAVED"),
+                                        window: nil, billing: true, saved: credit != nil, cost: credit?.amountUSD ?? bill?.costUSD))
                 continue
             }
             let windows = service.usage.flatMap { usage in
@@ -74,12 +77,12 @@ final class MenuBarUsageStrip {
             if reading.billing {
                 return reading.cost.map {
                     let amount = $0.formatted(.currency(code: "USD"))
-                    return reading.label == "SAVED" ? "\(reading.title) saved API credit balance \(amount)"
-                        : "\(reading.title) \(amount) this month"
-                } ?? reading.title + " monthly API cost unavailable"
+                    return reading.saved ? String(localized: "\(reading.title) saved API credit balance \(amount)")
+                        : String(localized: "\(reading.title) \(amount) this month")
+                } ?? String(localized: "\(reading.title) monthly API cost unavailable")
             }
-            return reading.window.map { "\(reading.title) \($0.label) \($0.percent) used" }
-                ?? "\(reading.title) quota unavailable"
+            return reading.window.map { String(localized: "\(reading.title) \($0.label) \($0.percent) used") }
+                ?? String(localized: "\(reading.title) quota unavailable")
         }
         let description = (["Agent Meter"] + details).joined(separator: ", ")
         return (image(readings, dark: dark), description)
@@ -100,9 +103,7 @@ final class MenuBarUsageStrip {
         let labelFont = NSFont.monospacedSystemFont(ofSize: 8, weight: .medium)
         let percentFont = NSFont.monospacedSystemFont(ofSize: 9, weight: .semibold)
         let values = readings.map(\.value)
-        let widths = zip(readings, values).map { reading, value in
-            reading.billing ? max(47, 25 + ceil(value.size(withAttributes: [.font: percentFont]).width)) : 47
-        }
+        let widths = values.map { max(47, 25 + ceil($0.size(withAttributes: [.font: percentFont]).width)) }
         let marks = readings.map { reading -> NSImage? in
             guard let icon = reading.icon else { return nil }
             return NSImage(size: NSSize(width: 15, height: 15), flipped: false) { rect in

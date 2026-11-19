@@ -210,7 +210,7 @@ final class NotchController {
         loadHooks()
         current = sessions(now: .now)
         if let id, !current.contains(where: { $0.id == id }) {
-            post(notice: "This session is no longer in the activity list.")
+            post(notice: String(localized: "This session is no longer in the activity list."))
             return
         }
         selectedID = id
@@ -456,7 +456,7 @@ final class NotchController {
         Task { @MainActor in
             switch await SessionFocus.open(activity) {
             case .opened: break
-            case .copied: post(notice: "Resume command copied")
+            case .copied: post(notice: String(localized: "Resume command copied"))
             case .failed(let message): post(notice: message)
             }
         }

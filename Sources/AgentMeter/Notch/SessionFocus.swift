@@ -41,7 +41,7 @@ enum SessionFocus {
             NSPasteboard.general.setString(command, forType: .string)
             return .copied(command)
         }
-        return .failed("Agent Meter could not find where this chat runs.")
+        return .failed(String(localized: "Agent Meter could not find where this chat runs."))
     }
 
     private static func locator(for activity: NotchActivity, host: NotchActivity.Host) -> String? {

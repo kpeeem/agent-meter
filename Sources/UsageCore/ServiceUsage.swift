@@ -76,18 +76,18 @@ public enum ServiceUsageError: LocalizedError, Sendable {
 
     public var message: String {
         switch self {
-        case .invalidKey: "Check the API key and subscription."
-        case .invalidAdminKey: "Paste the full organization Admin API key shown when you create it."
-        case .projectKeyForBilling: "This is an OpenAI project key (sk-proj-…). For Usage and Costs, create a key on the organization’s Admin keys page and copy the full secret."
-        case .personalKeyForBilling: "This is a Claude Console personal key (sk-ant-usr-…). Use Create admin key on the Admin keys page and paste the full sk-ant-admin01-… secret."
-        case .billingAccessDenied: "The provider rejected this key. Check that it is active and can read usage and billing."
-        case .xaiTeamMissing: "This xAI management key is not scoped to a team. Create a team management key in the xAI Console."
-        case .invalidReportKeyID(let prefix): "Enter a key ID beginning with \(prefix), or leave it blank for the organization."
-        case .reportRejected: "The provider rejected the report request. Check the API key ID and organization."
-        case .unavailable: "Service temporarily unavailable."
-        case .invalidResponse: "The service returned an unsupported quota response."
-        case .tooLarge: "The quota response exceeded the size limit."
-        case .rateLimited: "Rate limited. Automatic refresh will retry later."
+        case .invalidKey: String(localized: "Check the API key and subscription.")
+        case .invalidAdminKey: String(localized: "Paste the full organization Admin API key shown when you create it.")
+        case .projectKeyForBilling: String(localized: "This is an OpenAI project key (sk-proj-…). For Usage and Costs, create a key on the organization’s Admin keys page and copy the full secret.")
+        case .personalKeyForBilling: String(localized: "This is a Claude Console personal key (sk-ant-usr-…). Use Create admin key on the Admin keys page and paste the full sk-ant-admin01-… secret.")
+        case .billingAccessDenied: String(localized: "The provider rejected this key. Check that it is active and can read usage and billing.")
+        case .xaiTeamMissing: String(localized: "This xAI management key is not scoped to a team. Create a team management key in the xAI Console.")
+        case .invalidReportKeyID(let prefix): String(localized: "Enter a key ID beginning with \(prefix), or leave it blank for the organization.")
+        case .reportRejected: String(localized: "The provider rejected the report request. Check the API key ID and organization.")
+        case .unavailable: String(localized: "Service temporarily unavailable.")
+        case .invalidResponse: String(localized: "The service returned an unsupported quota response.")
+        case .tooLarge: String(localized: "The quota response exceeded the size limit.")
+        case .rateLimited: String(localized: "Rate limited. Automatic refresh will retry later.")
         }
     }
     public var errorDescription: String? { message }

@@ -144,7 +144,7 @@ struct NotchActivityView: View {
                             Text("+\(sessions.count - NotchLayout.visibleRows)")
                                 .font(.system(size: 10, weight: .semibold, design: .monospaced))
                         }
-                        Text(layout.showsAll ? "Show less" : "Show all")
+                        Text(layout.showsAll ? String(localized: "Show less") : String(localized: "Show all"))
                             .font(.system(size: 10, weight: .medium))
                         Image(systemName: layout.showsAll ? "chevron.up" : "chevron.down")
                             .font(.system(size: 9, weight: .semibold))
@@ -236,7 +236,7 @@ struct NotchActivityView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(NotchPressStyle())
-        .accessibilityHint(copiesCommand ? "Copy resume command" : "Return to session")
+        .accessibilityHint(copiesCommand ? String(localized: "Copy resume command") : String(localized: "Return to session"))
         .contextMenu {
             if let link = session.link {
                 Button("Copy session link") { copy(link.absoluteString) }
@@ -370,7 +370,8 @@ struct NotchActivityView: View {
                     }
                 }
                 if let request = card.request {
-                    pill(request.kind == .question ? "Answer in terminal" : card.openTitle ?? "Open", primary: false) {
+                    pill(request.kind == .question ? String(localized: "Answer in terminal") : card.openTitle ?? String(localized: "Open"),
+                         primary: false) {
                         onCardOpen(card.id)
                     }
                     Spacer(minLength: 0)
@@ -378,17 +379,17 @@ struct NotchActivityView: View {
                         let complete = card.questions.indices.allSatisfy {
                             presentation.content.selections[$0]?.isEmpty == false
                         }
-                        pill("Submit", primary: true) { onDecide(card.id, .allow) }
+                        pill(String(localized: "Submit"), primary: true) { onDecide(card.id, .allow) }
                             .disabled(!complete)
                             .opacity(complete ? 1 : 0.4)
                     } else {
-                        pill("Deny", primary: false) { onDecide(card.id, .deny) }
-                        pill("Always allow", primary: false) { onDecide(card.id, .always) }
-                        pill("Allow", primary: true) { onDecide(card.id, .allow) }
+                        pill(String(localized: "Deny"), primary: false) { onDecide(card.id, .deny) }
+                        pill(String(localized: "Always allow"), primary: false) { onDecide(card.id, .always) }
+                        pill(String(localized: "Allow"), primary: true) { onDecide(card.id, .allow) }
                     }
                 } else {
                     Spacer(minLength: 0)
-                    pill("Dismiss", primary: card.openTitle == nil) { onCardDismiss(card.id) }
+                    pill(String(localized: "Dismiss"), primary: card.openTitle == nil) { onCardDismiss(card.id) }
                     if let title = card.openTitle {
                         pill(title, primary: true) { onCardOpen(card.id) }
                     }
@@ -424,20 +425,24 @@ struct NotchActivityView: View {
 
     private func phaseLine(_ session: NotchActivity) -> String {
         switch session.phase {
-        case .running: return session.action ?? "Thinking…"
-        case .permission: return session.action.map { "Approval needed · " + $0 } ?? "Approval needed"
-        case .question: return session.request?.questions.first?.question ?? "Question"
-        case .waiting: return session.message.map(NotchFormat.firstLine) ?? "Waiting for input"
+        case .running: return session.action.map(NotchFormat.action) ?? String(localized: "Thinking…")
+        case .permission:
+            return session.action.map { String(localized: "Approval needed · \(NotchFormat.action($0))") }
+                ?? String(localized: "Approval needed")
+        case .question: return session.request?.questions.first?.question ?? String(localized: "Question")
+        case .waiting: return session.message.map(NotchFormat.firstLine) ?? String(localized: "Waiting for input")
         case .done:
             if let start = session.startedAt, session.updatedAt > start {
-                return "Finished in " + NotchFormat.duration(session.updatedAt.timeIntervalSince(start))
+                return String(localized: "Finished in \(NotchFormat.duration(session.updatedAt.timeIntervalSince(start)))")
             }
-            return "Finished"
-        case .failed: return session.message.map { "Error · " + NotchFormat.firstLine($0) } ?? "Stopped with an error"
-        case .interrupted: return "Interrupted"
-        case .ended: return "Ended"
-        case .ready: return "Ready"
-        case .recent: return "Recent"
+            return String(localized: "Finished")
+        case .failed:
+            return session.message.map { String(localized: "Error · \(NotchFormat.firstLine($0))") }
+                ?? String(localized: "Stopped with an error")
+        case .interrupted: return String(localized: "Interrupted")
+        case .ended: return String(localized: "Ended")
+        case .ready: return String(localized: "Ready")
+        case .recent: return String(localized: "Recent")
         }
     }
 

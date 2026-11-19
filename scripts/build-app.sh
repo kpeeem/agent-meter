@@ -19,6 +19,7 @@ mkdir -p "$app/Contents/"{MacOS,Helpers,Resources}
 
 cp Packaging/Info.plist "$app/Contents/Info.plist"
 cp -R Packaging/Fonts Packaging/Licenses Packaging/ProviderIcons Packaging/TerminalFocus "$app/Contents/Resources/"
+cp -R "$bin/AgentMeter_AgentMeter.bundle/Contents/Resources/"*.lproj "$app/Contents/Resources/"
 install -m 0755 "$bin/AgentMeter" "$app/Contents/MacOS/AgentMeter"
 install -m 0755 "$bin/AgentMeterStatus" "$app/Contents/Helpers/AgentMeterStatus"
 install -m 0755 "$bin/AgentMeterHook" "$app/Contents/Helpers/AgentMeterHook"

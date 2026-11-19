@@ -581,12 +581,12 @@ extension WorkOrigin {
     public var badge: String? {
         switch self {
         case .interactive: nil
-        case .claudeSubagent, .codexSubagent: "Subagent"
+        case .claudeSubagent, .codexSubagent: String(localized: "Subagent")
         case .claudeScripted: "claude -p"
         case .codexScripted: "codex exec"
         case .codexGuardian: "Guardian"
-        case .codexImported: "Import"
-        case .codexService: "Background"
+        case .codexImported: String(localized: "Import")
+        case .codexService: String(localized: "Background")
         }
     }
 }

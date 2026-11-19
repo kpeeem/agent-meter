@@ -85,33 +85,34 @@ struct NotchCardContent: Equatable {
         var code = false
         switch card.kind {
         case .done:
-            title = "Finished"
+            title = String(localized: "Finished")
             if let activity, let start = activity.startedAt, activity.updatedAt > start {
                 trailing = NotchFormat.duration(activity.updatedAt.timeIntervalSince(start))
             }
             subtitle = activity?.prompt
-            text = activity?.message ?? activity?.action
+            text = activity?.message ?? activity?.action.map(NotchFormat.action)
         case .failed:
-            title = "Stopped with an error"
-            subtitle = activity?.prompt ?? activity?.action
+            title = String(localized: "Stopped with an error")
+            subtitle = activity?.prompt ?? activity?.action.map(NotchFormat.action)
             text = activity?.message
         case .permission:
             if let request = activity?.request {
-                title = "Allow " + (request.tool.map(NotchFormat.toolName) ?? "this action") + "?"
+                title = request.tool.map { String(localized: "Allow \(NotchFormat.toolName($0))?") }
+                    ?? String(localized: "Allow this action?")
                 subtitle = activity?.prompt
-                text = request.detail ?? activity?.action
+                text = request.detail ?? activity?.action.map(NotchFormat.action)
             } else {
-                title = "Approval needed"
+                title = String(localized: "Approval needed")
                 subtitle = activity?.message.map { NotchFormat.firstLine($0) }
-                text = activity?.action
+                text = activity?.action.map(NotchFormat.action)
             }
             code = text != nil
         case .question:
             let header = activity?.request?.questions.first?.header
-            title = header.map { $0 } ?? "Claude asks"
+            title = header.map { $0 } ?? String(localized: "Claude asks")
             subtitle = activity?.prompt
         case .waiting:
-            title = activity?.message.map { NotchFormat.firstLine($0) } ?? "Waiting for your input"
+            title = activity?.message.map { NotchFormat.firstLine($0) } ?? String(localized: "Waiting for your input")
             subtitle = activity?.prompt
             text = activity?.message.flatMap { $0.contains("\n") ? $0 : nil }
         case .notice:
@@ -180,25 +181,28 @@ enum NotchMarkdown {
 
 enum NotchFormat {
     static func duration(_ seconds: TimeInterval) -> String {
-        let total = max(0, Int(seconds.rounded()))
-        if total < 60 { return "\(total)s" }
-        if total < 3600 { return "\(total / 60)m \(total % 60)s" }
-        return "\(total / 3600)h \(total % 3600 / 60)m"
+        Duration.seconds(max(0, Int(seconds.rounded()))).formatted(.units(allowed: [.hours, .minutes, .seconds],
+                                                                          width: .narrow, maximumUnitCount: 2,
+                                                                          fractionalPart: .hide(rounded: .down)))
     }
 
     static func clock(_ seconds: TimeInterval) -> String {
         let total = max(0, Int(seconds))
-        if total >= 3600 { return String(format: "%d:%02d:%02d", total / 3600, total % 3600 / 60, total % 60) }
-        return String(format: "%d:%02d", total / 60, total % 60)
+        return Duration.seconds(total).formatted(.time(pattern: total >= 3600 ? .hourMinuteSecond : .minuteSecond))
     }
 
     static func age(_ seconds: TimeInterval) -> String {
         let total = max(0, Int(seconds))
-        if total < 10 { return "now" }
-        if total < 60 { return "\(total)s" }
-        if total < 3600 { return "\(total / 60)m" }
-        if total < 86400 { return "\(total / 3600)h" }
-        return "\(total / 86400)d"
+        if total < 10 { return String(localized: "now") }
+        return Duration.seconds(total).formatted(.units(allowed: [.days, .hours, .minutes, .seconds], width: .narrow,
+                                                        maximumUnitCount: 1, fractionalPart: .hide(rounded: .down)))
+    }
+
+    static func action(_ text: String) -> String {
+        let verbs = ["Search web", "Update plan", "Run", "Read", "Edit", "Write", "Patch", "Search", "Find", "Fetch",
+                     "Agent", "Question"]
+        guard let verb = verbs.first(where: { text == $0 || text.hasPrefix($0 + " ") }) else { return text }
+        return Bundle.main.localizedString(forKey: verb, value: nil, table: nil) + text.dropFirst(verb.count)
     }
 
     static func firstLine(_ text: String) -> String {
@@ -211,9 +215,11 @@ enum NotchFormat {
     }
 
     static func openTitle(_ activity: NotchActivity) -> String {
-        if activity.provider == .codex, activity.host == nil || activity.host == .codexApp { return "Open in Codex" }
-        if let host = activity.host { return "Open in " + host.title }
-        return activity.provider == .claude ? "Open in Claude" : "Open"
+        if activity.provider == .codex, activity.host == nil || activity.host == .codexApp {
+            return String(localized: "Open in Codex")
+        }
+        if let host = activity.host { return String(localized: "Open in \(host.title)") }
+        return activity.provider == .claude ? String(localized: "Open in Claude") : String(localized: "Open")
     }
 }
 

@@ -7,11 +7,11 @@ public enum QuotaSeries: String, Codable, Sendable, CaseIterable {
 
     public var title: String {
         switch self {
-        case .claudeFiveHours: "Claude 5h"
-        case .claudeWeek: "Claude 7d"
-        case .codexFiveHours: "Codex 5h"
-        case .codexWeek: "Codex 7d"
-        case .grokWeek: "Grok 7d"
+        case .claudeFiveHours: String(localized: "Claude 5h")
+        case .claudeWeek: String(localized: "Claude 7d")
+        case .codexFiveHours: String(localized: "Codex 5h")
+        case .codexWeek: String(localized: "Codex 7d")
+        case .grokWeek: String(localized: "Grok 7d")
         }
     }
 

@@ -74,8 +74,9 @@ public struct AgentProcessSnapshot: Codable, Sendable, Equatable {
             bytes[12...15] = [0x61, 0x6D, 0x70, 0x73]
             let id = UUID(uuid: (bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
                                  bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]))
-            let note = group.kind == .ephemeral ? "Runs without a transcript. Started by \(group.owner)."
-                : "Started by \(group.owner)."
+            let owner = Bundle.main.localizedString(forKey: group.owner, value: nil, table: nil)
+            let note = group.kind == .ephemeral ? String(localized: "Runs without a transcript. Started by \(owner).")
+                : String(localized: "Started by \(owner).")
             return NotchActivity(provider: group.provider ?? .claude, session: id, phase: .running, cwd: group.cwd,
                                  host: nil, terminalID: nil, updatedAt: capturedAt, message: note, startedAt: started,
                                  pid: pid, origin: group.origin)

@@ -1,171 +1,132 @@
-# Agent Meter
+<p align="center">
+  <img src="preview/menubar-strip-en.png" width="560" alt="Agent Meter in the macOS menu bar">
+</p>
 
-Agent Meter показывает квоты Claude Code, Codex, Z.ai и Kimi Code и расходы API OpenAI, Anthropic и Grok в строке меню macOS и группирует локальное использование токенов по проектам и сессиям. В строке меню актуальные окна квот сменяются каждые три секунды. Список видимых аккаунтов настраивается в **Settings → Menu bar display**. В панели доступны окна квот, время сброса и статистика за 7 или 30 календарных дней.
+<h1 align="center">Agent Meter</h1>
 
-![Панель квот](preview/menubar.png)
+<p align="center">
+  Claude, Codex and Grok limits in the macOS menu bar.<br>
+  Session stats, background agents and a notch that answers agent prompts.
+</p>
 
-## Запуск
+<p align="center">
+  <a href="https://github.com/kpeeem/agent-meter/releases/latest"><img src="https://img.shields.io/github/v/release/kpeeem/agent-meter?label=download" alt="Latest release"></a>
+  <a href="https://github.com/kpeeem/agent-meter/actions/workflows/release.yml"><img src="https://github.com/kpeeem/agent-meter/actions/workflows/release.yml/badge.svg" alt="Build"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-black?logo=apple" alt="macOS 14+">
+  <img src="https://img.shields.io/badge/Swift-native-F05138?logo=swift&logoColor=white" alt="Native Swift">
+</p>
 
-Нужны macOS 14+ и Xcode с macOS SDK. Сборка использует SwiftPM без внешних зависимостей.
+<p align="center"><b>English</b> · <a href="README.ru.md">Русский</a></p>
 
-```sh
-git clone git@github.com:kpeeem/agent-meter.git && cd agent-meter
-```
+> **TL;DR** — Download the zip from [Releases](https://github.com/kpeeem/agent-meter/releases/latest), move the app to `/Applications`, clear the quarantine, open it and point **Settings → Data sources** at `~/.claude/projects` and `~/.codex/sessions`. Agent Meter only reads local files, never starts Claude Code or calls Claude, keeps API keys on your Mac and sends no telemetry.
 
-```sh
-./scripts/build-app.sh
-```
+<table>
+  <tr>
+    <td width="45%"><img src="preview/menubar-en.png" alt="Limits panel"></td>
+    <td>
+      <img src="preview/notch-en.png" alt="Sessions at the notch"><br><br>
+      <img src="preview/notch-card-en.png" alt="Approve a command from the notch">
+    </td>
+  </tr>
+</table>
 
-```sh
-open "build/Agent Meter.app"
-```
+## What it shows
 
-Если в login keychain есть сертификат подписи кода «Agent Meter Local», `build-app.sh` подписывает им приложение и помощники, и требование подписи остаётся одинаковым между сборками. Без сертификата сборка подписывается ad-hoc. Другой сертификат можно указать через `AGENT_METER_CODESIGN_IDENTITY`. Удалить локальный сертификат можно командой `security delete-identity -c "Agent Meter Local"`.
+| | |
+| --- | --- |
+| **Limits** | Claude 5-hour, weekly, Fable and per-model windows · live Codex limits and resets · Grok weekly pool · Z.ai and Kimi Coding Plans |
+| **API spend** | OpenAI, Anthropic and xAI month-to-date cost, tokens, credits and spending limit |
+| **Menu bar** | Rotates the windows every 3 seconds; pick what shows in Settings |
+| **Stats** | Sessions, tokens, a year-long calendar, limit history, top projects, hidden background work |
+| **Notch** | Live session list; cards when a turn ends, fails or waits; **Allow / Deny / Always allow** and answers to Claude's questions right from the notch |
+| **Quota board** | Pushes the same numbers to an e-paper board over Bluetooth LE |
+| **Languages** | English, Русский, Polski, picked from the macOS language |
 
-После запуска открой **Settings** через значок с ползунками внизу меню.
+![Stats window](preview/stats-en.png)
 
-- **Claude Code projects** — выбери `~/.claude/projects` или `projects` из своего `CLAUDE_CONFIG_DIR`.
-- **Codex sessions** — выбери `~/.codex/sessions` или `sessions` из своего `CODEX_HOME`.
-- **Codex archive** — при необходимости подключи `archived_sessions` отдельно.
+## Install
 
-В **Settings → Service accounts** можно добавить несколько именованных ключей подписки Z.ai или Kimi Coding Plan через **Add API key**. Для Kimi выбери регион, в котором создан ключ. После проверки соединения приложение сохраняет ключ в `service-keys.json` в своей папке песочницы (`~/Library/Containers/local.agentmeter.mac/Data/Library/Application Support/Agent Meter`, права 0600) и обновляет квоты каждые пять минут. Keychain не используется: у самоподписанной сборки macOS привязывает доступ к хешу конкретной сборки и спрашивает пароль после каждой пересборки. Ключи из старых версий переносятся в файл при первом чтении. Временные ошибки сохраняют последний успешный снимок с его исходной датой. Ответ 429 откладывает следующий запрос.
-
-В **Settings → API billing** подключаются OpenAI Platform и Anthropic Console. **Add Admin key** сохраняет отдельный административный ключ в том же файле. Чтобы показать отчёт по одному рабочему ключу, укажи его ID. Пустой фильтр показывает организацию. Карточка содержит стоимость и токены с начала календарного месяца по UTC, с обновлением каждые пять минут. Для OpenAI количество токенов берётся из отчёта Completions. Карточка Anthropic показывает дату данных провайдера. **Menu bar display** управляет показом суммы в строке меню. Для OpenAI **Billing overview** открывает остаток кредитов на Platform.
-
-Для Grok в **Settings → API billing → Grok API** нажми **Add management key…** и вставь management key команды из [xAI Console](https://console.x.ai/team/default/management-keys) (**Settings → Management keys**, не страница API keys). Agent Meter читает через Management API расходы текущего платёжного цикла, остаток предоплаченных кредитов и лимит расходов. Ключ хранится в том же файле, запросы идут на `management-api.x.ai` каждые пять минут. Обычный API-ключ `xai-…` к биллингу доступа не даёт. Grok API работает на предоплаченных кредитах: они не сбрасываются, а сумма расходов обнуляется 1-го числа по UTC. Без способа оплаты и кредитов карточке показывать нечего. Для ключа уровня организации карточка попросит ключ команды. **Save balance** в настройках сохраняет сумму и дату локально. Строка меню помечает сохранённый остаток как **SAVED**.
-
-Недельный пул подписки Grok (Weekly included usage с grok.com/dashboard/usage) читает тот же фоновый сборщик через сессию Grok Bot. Grok Bot хранит токен в `~/Library/Application Support/Grok Bot/sand-secrets.json`, зашифрованным ключом «Grok Bot Safe Storage» из Keychain. Сборщик берёт этот ключ через `/usr/bin/security`: macOS один раз спросит доступ, и «Always Allow» сохраняется навсегда, потому что `security` подписан Apple. Токен расшифровывается только в памяти, затем идёт запрос `GetSandUsageStatus` на `api2.cursor.sh`. Приложению передаются только процент, время сброса и название плана (`grok-usage.json`). Токен не обновляется и обратно не записывается, поэтому вход Grok Bot не сбрасывается. Если срок токена истёк, карточка просит открыть Grok Bot. Это неофициальный API, и он может измениться. Без установленного Grok Bot сборщик ничего не делает.
-
-Пятичасовое и недельное окна Claude и недельную квоту Fable приложение берёт из `~/.claude/quota-live.json`, если этот файл есть: его пишет мод `quota-live` из заголовков `anthropic-ratelimit-unified-*` обычных ответов API. Это те же числа и тот же путь, которым пользуется расширение Claude Code для VS Code: заголовки приходят на каждый запрос, стоят ноль и не могут упереться в 429. Опроса по таймеру нет, файл просто читается при каждом обходе логов. Источники сравниваются по времени наблюдения, поэтому без мода всё работает как раньше.
-
-Agent Meter не запускает Claude Code и сам не ходит в сеть Claude. Все числа Claude он только читает из файлов, которые пишут сами Claude Code и Claude Desktop: `quota-live.json`, история квот Claude Desktop (`plan-usage-history.json`), снимок status line и кэш Claude Statistics. Отдельные окна Opus и Sonnet приходят только из кэша Claude Statistics.
-
-Живые лимиты Codex и недельный пул Grok читает фоновый сборщик `AgentMeterRefresh`. Включается он в **Settings → Codex and Grok limits**. Скопируй предложенную команду, вставь её в Terminal и нажми Return, или выполни её из каталога проекта после сборки:
-
-```sh
-"build/Agent Meter.app/Contents/Helpers/AgentMeterRefresh" --install
-```
-
-Фоновое задание `~/Library/LaunchAgents/local.agentmeter.refresh.plist` запускает сборщик каждые пять минут, пока Agent Meter открыт. Приложение получает от него только проценты и даты. Для отключения выполни ту же команду с `--uninstall`.
-
-Для квот Claude нажми **Copy status line setup** и добавь скопированное поле `statusLine` в настройки Claude Code. Остальные поля JSON сохрани. После ответа Claude CLI передаст сборщику доступные проценты и время сброса. Если у тебя уже настроена status line, можешь сохранить её вывод через свой Bash-скрипт, передав тот же JSON обоим обработчикам.
+**Release build** — download `Agent-Meter-<version>.zip`, unzip, move **Agent Meter** to `/Applications`, then:
 
 ```bash
-#!/bin/bash
-tee >( '/path/to/Agent Meter.app/Contents/Helpers/AgentMeterStatus' --projects "$HOME/.claude/projects" --quiet ) \
-  | '/path/to/existing-status-line'
+xattr -dr com.apple.quarantine "/Applications/Agent Meter.app"
 ```
 
-Укажи этот скрипт как команду `statusLine` и подставь реальные пути. При перемещении приложения скопируй настройку заново. Для отключения убери вызов сборщика из status line. Снимок `.agent-meter-quota.json` можно удалить отдельно.
+The build is ad-hoc signed, not notarized, so macOS blocks it until the quarantine flag is gone.
 
-Если снимка status line нет или его окна устарели, Agent Meter читает `~/Library/Application Support/Claude/plan-usage-history.json`. Карточка помечает эти данные как **Desktop cache** и показывает время наблюдения. В файле есть проценты использования. Времени сброса в нём нет.
+**From source** — macOS 14+ and Xcode, no dependencies:
 
-Строки **Opus · 7-day** и **Sonnet · 7-day** появляются, только если Anthropic считает эти модели отдельно. На Pro отдельных окон нет, и строк тоже нет.
-
-**Fable · 7-day** берётся из `quota-live.json`, если мод `quota-live` 0.2.1 или новее её записал. Квота Fable растёт только от ответов Fable, поэтому такое значение не помечается как устаревшее, пока не наступил сброс недели, а время наблюдения видно в подсказке. Дополнительный источник — кэш после `/usage` в терминальном Claude Code, который переносится при следующей перерисовке status line. Карточка показывает время наблюдения, а более старые данные помечает как **Stale**. Сохранённый снимок Claude Statistics также доступен как запасной источник.
-
-**Fable API estimate** оценивает объём работы Fable 5, 5.1 и 5.2 в ценах API в долларах по токенам из локальных логов Claude Code. Период 7 или 30 дней выбирается в окне **Stats**. Для записи в кэш без указанного TTL применяется пятиминутный тариф. [Тарифы Anthropic API](https://platform.claude.com/docs/en/about-claude/pricing)
-
-У Codex квоты появляются по мере записи `rate_limits` в rollout-файлы. Набор окон зависит от локального снимка. Если окно истекло, Agent Meter помечает снимок как устаревший и убирает его число из строки меню. Облачная активность и использование с других устройств появятся только после записи нового снимка самим провайдером.
-
-В окне **Stats** разверни проект и дважды нажми на сессию, чтобы открыть её в Codex по `codex://threads/<id>` или скопировать `claude --resume <id>`. В **Settings** также можно открыть ссылку вида `codex://plugins/<id>` в Codex. Установка плагинов и исполнение команд происходят только в соответствующем приложении или терминале по твоему действию.
-
-## Фоновые агенты
-
-Раздел **Background** в окне **Stats** показывает работу, у которой нет своего окна, а нотч помечает такие сессии бейджем: `Guardian`, `Subagent`, `claude -p`, `codex exec`, `Import`, `Background`.
-
-- **Hidden work** считается по тем же логам, что и остальная статистика. Это сабагенты Claude (`subagents/` в папке сессии), запуски `claude -p` из скриптов и SDK (`entrypoint` вида `sdk-*`), ревью Codex Guardian (`thread_source: guardian_review`), сабагенты Codex, `codex exec` и треды, которые приложение Codex создаёт, импортируя транскрипты Claude Code (`turn_id: external-import-*`). Импорт в нотче сведён в одну строку на пачку. Токены этих сессий уже входят в общие итоги.
-- **Running now** и **Seen in the last 24 hours** заполняет помощник вне песочницы: из App Sandbox чужие процессы не видны. Он раз в 30 секунд, пока Agent Meter открыт, перечисляет процессы Claude Code, Codex и их MCP-серверов, отмечает запуски без транскрипта (`--no-session-persistence`, `codex exec --ephemeral`) и облачное окружение Codex (`exec-server --remote`), читает статус сессий из `~/.claude/sessions` и папки Remote Control Claude Desktop. В снимок `~/Library/Application Support/Agent Meter/agent-processes.json` попадают только названия, счётчики, память и рабочая папка запусков без окна. Командные строки и переменные окружения не сохраняются. Журнал запусков без транскрипта хранится 7 дней.
-
-```sh
-"build/Agent Meter.app/Contents/Helpers/AgentMeterRefresh" --install-processes
-"build/Agent Meter.app/Contents/Helpers/AgentMeterRefresh" --uninstall-processes
+```bash
+git clone https://github.com/kpeeem/agent-meter.git && cd agent-meter
+./scripts/build-app.sh && open "build/Agent Meter.app"
 ```
 
-## Доступ к данным
+## Set up
 
-- GUI работает в App Sandbox с доступом к явно выбранным папкам на чтение и security-scoped bookmarks. Точечные разрешения дают доступ к истории квот Claude Desktop, списку сессий Claude Desktop для диплинков, снимку Claude Statistics, файлу `quota-live.json` и числовым результатам фонового сборщика для Codex и Grok. Исходящие соединения используются для квот Z.ai и Kimi и отчётов OpenAI, Anthropic и xAI. Отчёты запрашиваются через GET на фиксированных адресах провайдеров.
-- Запросы аккаунтов идут на `api.z.ai`, `api.kimi.com` или `api.kimi.ai` согласно выбранному региону. Приложение использует отдельную сессию без cookies и дискового HTTP-кэша. Переадресации отключены. Ключи хранятся в файле с правами 0600 в контейнере песочницы приложения.
-- `AgentMeterRefresh` работает отдельным процессом вне App Sandbox. Он спрашивает лимиты Codex у `chatgpt.com` с входом Codex и пул Grok через сессию Grok Bot, а сохраняет только числовые снимки `codex-usage.json` и `grok-usage.json`. Claude Code он не запускает и к Claude не обращается.
-- Парсеры извлекают время, идентификаторы, пути проектов и числа. Содержимое сообщений и результаты инструментов в отдельную базу не копируются. Индекс прочитанных файлов живёт в памяти. Читаются незапакованные JSONL, изменённые в пределах выбранного периода или недели, если это нужно для квот.
-- Сборщик status line запускается Claude Code как обычная локальная команда. Он читает stdin и поле `cachedUsageUtilization` из `~/.claude.json` или `.claude.json` в активном `CLAUDE_CONFIG_DIR`. Сборщик сверяет идентификатор аккаунта в кэше и атомарно записывает только проценты и даты в выбранную папку `projects`. Снимок создаётся с правами `0600`. Сборщик работает без сетевых запросов и доступа к хранилищам токенов.
-- Передача на доску квот использует право песочницы `com.apple.security.device.bluetooth` и включается только флажком в настройках. Наружу уходят проценты использования, время сброса, план Codex и настройки самой платы — ни токенов, ни имён проектов, ни текста сессий. Связь не шифруется и не требует пары, поэтому писать на плату может любое устройство в радиусе, но прочитать с неё числа нельзя: характеристика квот доступна только на запись.
-- Телеметрия, автообновление приложения и загрузчик плагинов отсутствуют. Переходы по deeplink выполняются по нажатию и передаются macOS.
-- Хуки для уведомлений подключаются отдельной командой. Сборщик сохраняет статус, идентификатор, путь проекта, данные для перехода в терминал и короткую сводку хода: запрос до 280 символов, текущее действие до 240 символов и последний ответ модели до 1200 символов. Ответ берётся из поля события или из хвоста транскрипта сессии внутри домашней папки. Путь к транскрипту и вывод инструментов в снимок не попадают. Снимок хранится локально, с правами `0600` и ограничением в 64 сессии.
-- Ответы из notch передаются файлами в `~/Library/Application Support/Agent Meter/replies` с правами `0600`. Приложение пишет туда только решение для конкретного запроса и отметку о работе, на которую хук проверяет, что Agent Meter запущен. Для этого у песочницы есть право записи только в эту папку. Хук принимает ответ лишь для своего запроса и удаляет файл после чтения. Подтверждение и вопрос ждут ответа синхронно с таймаутом 300 секунд. Остальные события передаются асинхронно.
+1. Click the slider icon at the bottom of the panel to open **Settings**.
+2. **Data sources** → connect `~/.claude/projects` and `~/.codex/sessions` (read-only, sandboxed).
+3. Optional extras below.
 
-## Уведомления у выреза
+![Settings](preview/settings-en.png)
 
-Открой **Settings → Notch notifications**, выбери провайдера и выполни **Copy install command** в терминале. После обновления Agent Meter выполни команду повторно: она обновит записи Agent Meter, в том числе синхронные обработчики для ответов из notch. Для Codex проверь новые записи в `/hooks`. Команда дописывает свои обработчики в `settings.json` Claude Code или `hooks.json` Codex и сохраняет резервную копию. **Copy remove command** убирает обработчики Agent Meter.
+<details>
+<summary><b>Claude limits</b></summary>
 
-В простое вырез пустой. Когда ход завершается, падает с ошибкой, ждёт ввода или подтверждения, у выреза раскрывается карточка: проект, запрос, ответ модели или команда и кнопка перехода в сессию. Карточка «Finished» закрывается через 10 секунд, наведение ставит таймер на паузу.
+Agent Meter reads only what Claude Code and Claude Desktop already write: `~/.claude/quota-live.json` (rate-limit headers, written by the `quota-live` mod), Claude Desktop's `plan-usage-history.json`, the status line snapshot and the Claude Statistics cache. **Copy status line setup** gives a `statusLine` entry for Claude Code settings; keep your own status line by piping the same JSON to both commands.
+</details>
 
-Из notch можно отвечать. Когда Claude Code в терминале просит разрешение, карточка показывает команду целиком и кнопки **Allow**, **Deny**, **Always allow** и **Open**. «Always allow» одобряет этот инструмент до конца сессии без новых карточек. На вопросы Claude (AskUserQuestion) карточка показывает варианты ответа и кнопку **Submit**. **Open**, **Answer in terminal**, крестик или переход в приложение сессии возвращают запрос в обычный диалог. Хук ждёт ответа до 280 секунд и работает только при запущенном Agent Meter. Если приложение закрыто или notch выключен, запрос сразу идёт обычным путём.
+<details>
+<summary><b>Live Codex and Grok limits</b></summary>
 
-Claude Desktop решает о разрешениях сам, параллельно с хуками, поэтому его сессии ответов из notch не получают. Карточка подтверждения у них появляется по уведомлению `permission_prompt`, когда запрос висит около шести секунд. Для Codex хук читает `approvals_reviewer` из транскрипта сессии. При `auto_review` запросы проверяет автоматический ревьюер, карточки нет. Если ревьюер — пользователь, карточка с кнопками появляется так же, как для Claude Code.
+**Settings → Codex and Grok limits** copies a command that installs `AgentMeterRefresh`, a helper outside the sandbox. While Agent Meter is open it asks `chatgpt.com` for Codex limits with your Codex sign-in, and reads the Grok weekly pool through the Grok Bot session. That Grok endpoint is unofficial. Only percentages and dates reach the app. Remove it with `--uninstall`.
+</details>
 
-Служебные сессии — Guardian review, субагенты Claude и Codex, `claude -p`, `codex exec`, импорт — стоят в списке notch с бейджем, но карточками не всплывают. Хук и сканер определяют их по полям `thread_source` и `source` в первой строке транскрипта, как и Claude Statistics. Всплывающие карточки для них включает флажок **Settings → Notch notifications → Pop up cards for subagents, Guardian reviews and other background runs**. Запрос разрешения или вопрос от такой сессии всплывает всегда: без ответа хук ждал бы до 280 секунд. Токены этих сессий остаются в итогах проекта.
+<details>
+<summary><b>Service accounts and API billing</b></summary>
 
-Наведение на вырез раскрывает список сессий. В строке видно текущее действие, время хода и последний комментарий модели или запрос. На дисплее без выреза область наведения обозначает короткая полоска вверху. Панель остаётся открытой, пока курсор над списком, и сворачивается при уходе. Кнопка с волной в меню открывает список по клику. Он закрывается, когда курсор уходит со списка, или по клику мимо. Источники логов в **Data sources** добавляют недавние сессии и состояния ходов Codex. Карточки показывают работу, ожидание ввода или подтверждения и завершение. В контекстном меню карточки можно скопировать ссылку `agentmeter://session/<provider>/<uuid>`. Ссылка открывает карточку уже известной приложению сессии.
+Add Z.ai or Kimi Coding Plan keys under **Service accounts**, and OpenAI or Anthropic admin keys or an xAI management key under **API billing**. Keys live in a `0600` file inside the app's sandbox container, and usage refreshes every 5 minutes.
+</details>
 
-Для Codex Desktop используется `codex://threads/<uuid>`. В iTerm2 и Terminal приложение ищет вкладку по ID сессии или TTY. В Ghostty переход к панели выполняется при единственном совпадении пути проекта. Точное переключение вкладок использует разрешение macOS **Automation**. Если вкладку определить не удалось, открывается окно исходного терминала. Для Claude также можно скопировать `claude --resume <uuid>` из контекстного меню карточки.
+<details>
+<summary><b>Notch notifications</b></summary>
 
-## Доска квот
+**Settings → Notch notifications** copies an install command for Claude Code or Codex hooks. Cards show the project, prompt, last answer or command. Approvals and questions wait up to 280 s for your answer, then fall back to the usual terminal prompt. Background runs (subagents, Guardian, `claude -p`, `codex exec`) are listed with a badge and don't pop up unless you ask.
+</details>
 
-**Settings → Quota board** включает передачу квот на плату [NM-EPD-420](https://github.com/kpeeem/nm-epd-420-quota): 4.2" e-paper на ESP32-S3, по строке на пятичасовое окно Claude, его неделю, Fable и Codex. Agent Meter отдаёт туда те же числа, что показывает в меню, поэтому на самой плате не лежит ни одного токена.
+<details>
+<summary><b>Background agents</b></summary>
 
-Связь идёт по Bluetooth LE. Приложение ищет сервис `ae4c9350-5442-48a2-8f62-288e8b34fc7c`, подключается к плате `quotaboard` и после каждого обновления пишет снимок — JSON меньше 512 байт — в характеристику квот, у которой есть только запись. Снимок уходит, когда числа изменились, и не реже раза в две минуты, чтобы плата видела, что Mac рядом.
+**Settings → Background agents** installs a helper that lists Claude Code, Codex and MCP processes every 30 s, including runs that keep no transcript. It saves names, counts and memory, never command lines.
+</details>
 
-Вместе с процентом уходит возраст чтения. Окна приходят из разных источников: заголовки Claude Code могут молчать, пока недельные числа берутся из истории десктопного Claude, поэтому у каждого окна свой возраст, и плата подписывает `cached` только устаревшую строку. По той же причине неудачная попытка сбора сама по себе не делает числа устаревшими — состояние описывает то, что лежит в снимке.
+## Privacy
 
-Вторая характеристика, настроек, работает в обе стороны: источник данных, тема, набор карточек, интервал перерисовки и часовой пояс хранятся в NVS платы, а не в приложении. Часовой пояс приложение выставляет само по своему смещению: плата, у которой часы расходятся с Mac, кормящим её числами, просто врёт. Плата шлёт notify на каждое изменение, поэтому панель настроек показывает и перезагрузку платы, и правку, сделанную в её собственном веб-портале.
+- Sandboxed app with read-only access to the folders you pick.
+- No Claude requests, no telemetry, no auto-update, no plugin loader.
+- Network goes only to the providers whose keys you add, at fixed endpoints.
+- The quota board gets percentages and reset times, never tokens, project names or session text.
 
-Перерисовка экрана — дело платы. Полное обновление трёхцветной панели занимает около десяти секунд, поэтому новые числа попадают на экран по интервалу платы, а не на каждую запись.
+## Languages
 
-Первое включение флажка запрашивает у macOS разрешение на Bluetooth. Пока флажок выключен, приложение не создаёт `CBCentralManager` и разрешение не спрашивает.
-
-![Настройки доски квот](preview/settings-board.png)
-
-## Интерфейс
-
-Меню и окна используют тёмное оформление. В меню отображаются карточки квот Claude, Codex и подключённых API-аккаунтов. Логотипы Claude и OpenAI в строке меню взяты из [Claude Statistics](https://github.com/sj719045032/claude-statistics/tree/589ade0/ClaudeStatistics/Assets.xcassets). Значок графика открывает отдельное окно **Stats** с плитками метрик, календарём, составом токенов и проектами. Настройки источников находятся на вкладке **Settings**.
-
-![Окно Stats](preview/stats.png)
-
-Высоту окна **Stats** и **Settings** можно тянуть свободно, ширина фиксированная: содержимое свёрстано по сетке в 820 точек. Минимальная высота — 320 точек, всё, что не поместилось, уходит в прокрутку. Высоту панели в строке меню меняет ручка внизу, до полной высоты экрана; двойной щелчок по ней возвращает высоту по содержимому.
-
-Нативная разметка меню и окна, элементы графиков и гарнитура перенесены из [ContextBar](https://github.com/htahaozlu/context-bar/tree/89287a92ecac794022e08a3e1df944623dfc47d1/menubar) и адаптированы под локальные данные Agent Meter. Лицензии ContextBar и JetBrains Mono включены в `Packaging/Licenses` и в ресурсы приложения.
-
-## Языки
-
-Интерфейс переведён на русский и польский, английский остаётся базовым. Язык берётся из системной настройки macOS: «Системные настройки → Основные → Язык и регион», там же можно выбрать язык только для Agent Meter. Проверить перевод, не меняя системный язык:
+The UI follows **System Settings → General → Language & Region**. Try another language without changing yours:
 
 ```bash
 open "build/Agent Meter.app" --args -AppleLanguages "(ru)"
 ```
 
-Строки лежат в String Catalog `Sources/AgentMeter/Resources/Localizable.xcstrings`, тексты запросов Bluetooth и Automation — в `InfoPlist.xcstrings` рядом. SwiftPM компилирует каталоги в `.lproj`, `scripts/build-app.sh` копирует их в `Contents/Resources`, и `String(localized:)` и SwiftUI `Text` находят переводы через `Bundle.main`. Множественное число задано вариациями каталога, числа, проценты, длительности и даты форматирует `FormatStyle`. Claude, Codex, Fable, Guardian, Opus, Sonnet и notch не переводятся. Названия процессов от помощника `--processes` и глаголы инструментов из хуков (Run, Edit, Read) переводятся при показе по известному списку, незнакомые остаются как есть.
+<img src="preview/menubar-pl.png" width="260" alt="Panel in Polish"> <img src="preview/notch-card-pl.png" width="440" alt="Notch card in Polish">
 
-<img src="preview/menubar-ru.png" width="320" alt="Панель на русском"> <img src="preview/menubar-pl.png" width="320" alt="Panel po polsku">
+Strings live in `Sources/AgentMeter/Resources/Localizable.xcstrings`.
 
-<img src="preview/notch-card-ru.png" width="440" alt="Карточка подтверждения у выреза на русском"> <img src="preview/notch-card-pl.png" width="440" alt="Karta zatwierdzenia w notchu po polsku">
+## Development
 
-![Окно Stats на русском](preview/stats-ru.png)
-
-![Okno Settings po polsku](preview/settings-pl.png)
-
-Остальные снимки обеих локалей, включая список сессий у выреза, лежат в `preview/`.
-
-## Как устроены референсы
-
-| Проект | Код и данные | Что интересно для Agent Meter |
-| --- | --- | --- |
-| ContextBar | Меню и окна на AppKit, отдельный Rust core и CLI. Ядро пишет `context.json`, интерфейс читает его и хранит свою историю в SQLite. Есть собственный updater и опциональная синхронизация. | Статистика по проектам и отображение контекста, кэша и оценки стоимости. [Меню](https://github.com/htahaozlu/context-bar/tree/89287a9/menubar) · [Rust core](https://github.com/htahaozlu/context-bar/tree/89287a9/crates/context-bar-core) |
-| Agent Notch | SwiftPM, AppKit и SwiftUI. `NotchCore` читает логи и обрабатывает события отдельного `NotchHook` через локальный сокет. Подтверждения и настройка hooks входят в приложение. | Пример навигации по активным сессиям и будущей интеграции с notch. [Package.swift](https://github.com/Forichok/Agent-Notch/blob/70dd0cb/Package.swift) · [NotchCore](https://github.com/Forichok/Agent-Notch/tree/70dd0cb/Sources/NotchCore) |
-| CodexBar | SwiftPM, SwiftUI и AppKit, отдельный `CodexBarCore`, CLI и виджеты. Для квот есть разные стратегии, в том числе CLI, OAuth и cookies. Есть JavaScript-плагины и Sparkle. | Компактная строка меню, индикация заполнения и отдельные источники по провайдерам. [Архитектура](https://github.com/steipete/CodexBar/blob/7447bc7/docs/architecture.md) |
-
-В Agent Meter оболочка macOS отделена от библиотеки `UsageCore` и маленького сборщика status line. Следующий провайдер добавляется парсером и описанием источника в исходниках. Для переноса функций из референсов проверяй diff и лицензию конкретного файла.
-
-```sh
+```bash
 swift test
+./scripts/build-app.sh
 ```
+
+Pushing a `v*` tag that matches `CFBundleShortVersionString` makes GitHub Actions test the app, build it and attach `Agent-Meter-<version>.zip` to a release.
+
+## Credits
+
+Native layout, charts and typography adapted from [ContextBar](https://github.com/htahaozlu/context-bar). Claude and OpenAI menu bar marks from [Claude Statistics](https://github.com/sj719045032/claude-statistics). [JetBrains Mono](https://www.jetbrains.com/lp/mono/) font. Their licenses are in `Packaging/Licenses`.

@@ -14,6 +14,7 @@
   <a href="https://github.com/kpeeem/agent-meter/actions/workflows/release.yml"><img src="https://github.com/kpeeem/agent-meter/actions/workflows/release.yml/badge.svg" alt="Build"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-black?logo=apple" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Swift-native-F05138?logo=swift&logoColor=white" alt="Native Swift">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/kpeeem/agent-meter" alt="MIT license"></a>
 </p>
 
 <p align="center"><b>English</b> · <a href="README.ru.md">Русский</a></p>
@@ -136,3 +137,7 @@ Pushing a `v*` tag that matches `CFBundleShortVersionString` makes GitHub Action
 ## Credits
 
 Native layout, charts and typography adapted from [ContextBar](https://github.com/htahaozlu/context-bar). Claude and OpenAI menu bar marks from [Claude Statistics](https://github.com/sj719045032/claude-statistics). [JetBrains Mono](https://www.jetbrains.com/lp/mono/) font. Their licenses are in `Packaging/Licenses`.
+
+## License
+
+[MIT](LICENSE). The parts listed in Credits keep their own licenses.

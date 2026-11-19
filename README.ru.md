@@ -14,6 +14,7 @@
   <a href="https://github.com/kpeeem/agent-meter/actions/workflows/release.yml"><img src="https://github.com/kpeeem/agent-meter/actions/workflows/release.yml/badge.svg" alt="Сборка"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-black?logo=apple" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Swift-native-F05138?logo=swift&logoColor=white" alt="Нативный Swift">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/kpeeem/agent-meter" alt="Лицензия MIT"></a>
 </p>
 
 <p align="center"><a href="README.md">English</a> · <b>Русский</b></p>
@@ -136,3 +137,7 @@ swift test
 ## Благодарности
 
 Нативная разметка, графики и типографика взяты из [ContextBar](https://github.com/htahaozlu/context-bar). Значки Claude и OpenAI в строке меню — из [Claude Statistics](https://github.com/sj719045032/claude-statistics). Шрифт [JetBrains Mono](https://www.jetbrains.com/lp/mono/). Их лицензии лежат в `Packaging/Licenses`.
+
+## Лицензия
+
+[MIT](LICENSE). Части из раздела «Благодарности» остаются под своими лицензиями.

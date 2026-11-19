@@ -7,7 +7,7 @@ final class DetailTabViewController: NSTabViewController {
     static let minimumContentHeight: CGFloat = 320
 
     override var preferredContentSize: NSSize {
-        get { view.window.map { $0.contentRect(forFrameRect: $0.frame).size } ?? Self.defaultContentSize }
+        get { .zero }
         set {}
     }
 
@@ -98,6 +98,7 @@ final class DetailWindowController: NSWindowController {
         window.contentMinSize = NSSize(width: size.width, height: DetailTabViewController.minimumContentHeight)
         window.contentMaxSize = NSSize(width: size.width, height: .greatestFiniteMagnitude)
         window.contentViewController = tabs
+        window.setContentSize(size)
         window.toolbar?.displayMode = .iconOnly
         window.center()
         if let contentView = window.contentView {

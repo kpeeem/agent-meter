@@ -172,11 +172,14 @@ public struct ScanResult: Sendable {
 
     public func projects(for provider: Provider?) -> [ProjectUsage] {
         let visible = sessions.filter { provider == nil || $0.provider == provider }
-        return Dictionary(grouping: visible, by: \.project).map { path, sessions in
-            ProjectUsage(path: path, tokens: sessions.reduce(Tokens()) { $0 + $1.tokens },
-                         sessions: sessions.sorted { $0.lastActivity > $1.lastActivity })
-        }.sorted {
-            $0.tokens.total == $1.tokens.total ? $0.path < $1.path : $0.tokens.total > $1.tokens.total
+        let grouped: [String: [SessionUsage]] = Dictionary(grouping: visible, by: \.project)
+        let projects: [ProjectUsage] = grouped.map { (path: String, sessions: [SessionUsage]) -> ProjectUsage in
+            let tokens = sessions.reduce(Tokens()) { (total: Tokens, session: SessionUsage) in total + session.tokens }
+            let ordered = sessions.sorted { (a: SessionUsage, b: SessionUsage) in a.lastActivity > b.lastActivity }
+            return ProjectUsage(path: path, tokens: tokens, sessions: ordered)
+        }
+        return projects.sorted { (a: ProjectUsage, b: ProjectUsage) -> Bool in
+            a.tokens.total == b.tokens.total ? a.path < b.path : a.tokens.total > b.tokens.total
         }
     }
 }

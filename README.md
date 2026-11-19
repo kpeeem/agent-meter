@@ -136,6 +136,26 @@ Claude Desktop решает о разрешениях сам, параллель
 
 Нативная разметка меню и окна, элементы графиков и гарнитура перенесены из [ContextBar](https://github.com/htahaozlu/context-bar/tree/89287a92ecac794022e08a3e1df944623dfc47d1/menubar) и адаптированы под локальные данные Agent Meter. Лицензии ContextBar и JetBrains Mono включены в `Packaging/Licenses` и в ресурсы приложения.
 
+## Языки
+
+Интерфейс переведён на русский и польский, английский остаётся базовым. Язык берётся из системной настройки macOS: «Системные настройки → Основные → Язык и регион», там же можно выбрать язык только для Agent Meter. Проверить перевод, не меняя системный язык:
+
+```bash
+open "build/Agent Meter.app" --args -AppleLanguages "(ru)"
+```
+
+Строки лежат в String Catalog `Sources/AgentMeter/Resources/Localizable.xcstrings`, тексты запросов Bluetooth и Automation — в `InfoPlist.xcstrings` рядом. SwiftPM компилирует каталоги в `.lproj`, `scripts/build-app.sh` копирует их в `Contents/Resources`, и `String(localized:)` и SwiftUI `Text` находят переводы через `Bundle.main`. Множественное число задано вариациями каталога, числа, проценты, длительности и даты форматирует `FormatStyle`. Claude, Codex, Fable, Guardian, Opus, Sonnet и notch не переводятся. Названия процессов от помощника `--processes` и глаголы инструментов из хуков (Run, Edit, Read) переводятся при показе по известному списку, незнакомые остаются как есть.
+
+<img src="preview/menubar-ru.png" width="320" alt="Панель на русском"> <img src="preview/menubar-pl.png" width="320" alt="Panel po polsku">
+
+<img src="preview/notch-card-ru.png" width="440" alt="Карточка подтверждения у выреза на русском"> <img src="preview/notch-card-pl.png" width="440" alt="Karta zatwierdzenia w notchu po polsku">
+
+![Окно Stats на русском](preview/stats-ru.png)
+
+![Okno Settings po polsku](preview/settings-pl.png)
+
+Остальные снимки обеих локалей, включая список сессий у выреза, лежат в `preview/`.
+
 ## Как устроены референсы
 
 | Проект | Код и данные | Что интересно для Agent Meter |

@@ -19,7 +19,8 @@ mkdir -p "$app/Contents/"{MacOS,Helpers,Resources}
 
 cp Packaging/Info.plist "$app/Contents/Info.plist"
 cp -R Packaging/Fonts Packaging/Licenses Packaging/ProviderIcons Packaging/TerminalFocus "$app/Contents/Resources/"
-cp -R "$bin/AgentMeter_AgentMeter.bundle/Contents/Resources/"*.lproj "$app/Contents/Resources/"
+find "$bin/AgentMeter_AgentMeter.bundle" -type d -name "*.lproj" -prune -exec cp -R {} "$app/Contents/Resources/" \;
+[[ -d "$app/Contents/Resources/ru.lproj" && -d "$app/Contents/Resources/pl.lproj" ]]
 install -m 0755 "$bin/AgentMeter" "$app/Contents/MacOS/AgentMeter"
 install -m 0755 "$bin/AgentMeterStatus" "$app/Contents/Helpers/AgentMeterStatus"
 install -m 0755 "$bin/AgentMeterHook" "$app/Contents/Helpers/AgentMeterHook"

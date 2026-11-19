@@ -31,7 +31,7 @@ public final class ServiceUsageClient: NSObject, URLSessionTaskDelegate, @unchec
     func send(_ original: URLRequest, billing: Bool = false) async throws -> Data {
         var request = original
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("AgentMeter/0.6", forHTTPHeaderField: "User-Agent")
+        request.setValue("AgentMeter/0.7", forHTTPHeaderField: "User-Agent")
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 20
         configuration.timeoutIntervalForResource = 25

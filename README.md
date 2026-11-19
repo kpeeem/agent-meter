@@ -39,10 +39,16 @@
 | **Menu bar** | Rotates the windows every 3 seconds; pick what shows in Settings |
 | **Stats** | Sessions, tokens, a year-long calendar, limit history, top projects, hidden background work |
 | **Notch** | Live session list; cards when a turn ends, fails or waits; **Allow / Deny / Always allow** and answers to Claude's questions right from the notch |
-| **Quota board** | Pushes the same numbers to an e-paper board over Bluetooth LE |
+| **Claudometer** | Pushes the same numbers to [Claudometer](https://github.com/kpeeem/claudometer), an ESP32-S3 e-paper board, over Bluetooth LE |
 | **Languages** | English, Русский, Polski, picked from the macOS language |
 
 ![Stats window](preview/stats-en.png)
+
+## Claudometer
+
+<a href="https://github.com/kpeeem/claudometer"><img src="https://raw.githubusercontent.com/kpeeem/claudometer/main/preview/overview.png" width="400" alt="Claudometer e-paper board"></a>
+
+The same limits on a 4.2″ e-paper board on your desk. Agent Meter feeds it over Bluetooth, so the board holds no tokens. Firmware, flashing and the printable case: [kpeeem/claudometer](https://github.com/kpeeem/claudometer).
 
 ## Install
 
@@ -104,7 +110,7 @@ Add Z.ai or Kimi Coding Plan keys under **Service accounts**, and OpenAI or Anth
 - Sandboxed app with read-only access to the folders you pick.
 - No Claude requests, no telemetry, no auto-update, no plugin loader.
 - Network goes only to the providers whose keys you add, at fixed endpoints.
-- The quota board gets percentages and reset times, never tokens, project names or session text.
+- Claudometer gets percentages and reset times, never tokens or session text.
 
 ## Languages
 
